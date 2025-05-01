@@ -21,14 +21,19 @@
                     <a class="nav-link" th:href="@{/parking}">Available Parking</a>
                 </li>
 
-                <!-- Admin links -->
+                <!-- Admin links - only visible to ADMIN users -->
                 <li class="nav-item" sec:authorize="hasRole('ADMIN')">
                     <a class="nav-link" th:href="@{/admin/dashboard}">Admin Dashboard</a>
                 </li>
 
-                <!-- Attendant links -->
+                <!-- Attendant links - only visible to ATTENDANT users -->
                 <li class="nav-item" sec:authorize="hasRole('ATTENDANT')">
                     <a class="nav-link" th:href="@{/attendant}">Attendant Dashboard</a>
+                </li>
+
+                <!-- User dashboard - only visible to regular users -->
+                <li class="nav-item" sec:authorize="hasRole('USER')">
+                    <a class="nav-link" th:href="@{/user/dashboard}">My Reservations</a>
                 </li>
             </ul>
 
@@ -37,11 +42,18 @@
                 <li class="nav-item" sec:authorize="!isAuthenticated()">
                     <a class="nav-link" th:href="@{/login}">Login</a>
                 </li>
+                <li class="nav-item" sec:authorize="!isAuthenticated()">
+                    <a class="nav-link" th:href="@{/signup}">Sign Up</a>
+                </li>
                 <li class="nav-item dropdown" sec:authorize="isAuthenticated()">
                     <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <span sec:authentication="name">Username</span>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        <li>
+                            <a class="dropdown-item" th:href="@{/dashboard}">Dashboard</a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
                         <li>
                             <form th:action="@{/logout}" method="post">
                                 <button type="submit" class="dropdown-item">Logout</button>

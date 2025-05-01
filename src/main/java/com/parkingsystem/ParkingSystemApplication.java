@@ -27,20 +27,15 @@ public class ParkingSystemApplication {
                     userService.createUser("admin", "admin123", "ADMIN");
                     System.out.println("Admin user created successfully");
                 }
+
+                // Create another admin user as requested
+                if (userService.getUserByUsername("aldo").isEmpty()) {
+                    userService.createUser("aldo", "pass123", "ADMIN");
+                    System.out.println("Admin user 'aldo' created successfully");
+                }
             } catch (Exception e) {
                 System.err.println("Error creating admin user: " + e.getMessage());
                 e.printStackTrace(); // Print stack trace for more detailed debugging
-            }
-
-            // Create regular user if not exists
-            try {
-                if (userService.getUserByUsername("user").isEmpty()) {
-                    userService.createUser("user", "password", "USER");
-                    System.out.println("Regular user created successfully");
-                }
-            } catch (Exception e) {
-                System.err.println("Error creating regular user: " + e.getMessage());
-                e.printStackTrace();
             }
 
             // Create some sample parking lots if database is empty

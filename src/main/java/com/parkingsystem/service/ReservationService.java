@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.slf4j.Logger;
@@ -74,9 +75,16 @@ public class ReservationService {
         logger.info("Calculated price: {}", price);
 
         try {
-            // Create reservation
-          
-            Reservation reservation = new Reservation(licensePlate, startTime, endTime, price, true, parking);
+            // Create reservation with the builder pattern
+            Reservation reservation = Reservation.builder()
+                    .licensePlate(licensePlate)
+                    .startTime(startTime)
+                    .endTime(endTime)
+                    .calculatedPrice(price)
+                    .isPaid(false)
+                    .reservedFromApp(true)
+                    .parking(parking)
+                    .build();
 
             // Update available spots
             parking.setAvailableSpots(parking.getAvailableSpots() - 1);
@@ -177,6 +185,65 @@ public class ReservationService {
             throw new RuntimeException("License plate cannot be empty");
         }
 
-        return reservationRepository.findByLicensePlate(licensePlate);
+        try {
+            return reservationRepository.findByLicensePlate(licensePlate);
+        } catch (Exception e) {
+            logger.error("Error finding reservations by license plate: {}", e.getMessage(), e);
+            // Return empty list instead of throwing to avoid error in dashboard
+            return new ArrayList<>();
+        }
+    }
+
+    // Get all reservations
+    public List<Reservation> getAllReservations() {
+        logger.info("Fetching all reservations");
+        return reservationRepository.findAll();
+    }
+
+    // Find upcoming reservations (reservations that start in the future)
+    public List<Reservation> findUpcomingReservations() {
+        logger.info("Finding upcoming reservations");
+        LocalDateTime now = LocalDateTime.now();
+        try {
+            List<Reservation> allReservations = reservationRepository.findAll();
+            return allReservations.stream()
+                    .filter(r -> r.getStartTime().isAfter(now))
+                    .sorted((r1, r2) -> r1.getStartTime().compareTo(r2.getStartTime()))
+                    .toList();
+        } catch (Exception e) {
+            logger.error("Error finding upcoming reservations: {}", e.getMessage(), e);
+            return new ArrayList<>();
+        }
+    }
+
+    // Find active reservations (reservations that have started but not ended)
+    public List<Reservation> findActiveReservations() {
+        logger.info("Finding active reservations");
+        LocalDateTime now = LocalDateTime.now();
+        try {
+            List<Reservation> allReservations = reservationRepository.findAll();
+            return allReservations.stream()
+                    .filter(r -> r.getStartTime().isBefore(now) && r.getEndTime().isAfter(now))
+                    .toList();
+        } catch (Exception e) {
+            logger.error("Error finding active reservations: {}", e.getMessage(), e);
+            return new ArrayList<>();
+        }
+    }
+
+    // Find past reservations (reservations that have ended)
+    public List<Reservation> findPastReservations() {
+        logger.info("Finding past reservations");
+        LocalDateTime now = LocalDateTime.now();
+        try {
+            List<Reservation> allReservations = reservationRepository.findAll();
+            return allReservations.stream()
+                    .filter(r -> r.getEndTime().isBefore(now))
+                    .sorted((r1, r2) -> r2.getEndTime().compareTo(r1.getEndTime())) // Most recent first
+                    .toList();
+        } catch (Exception e) {
+            logger.error("Error finding past reservations: {}", e.getMessage(), e);
+            return new ArrayList<>();
+        }
     }
 }

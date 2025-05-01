@@ -7,14 +7,93 @@
     <h2>User Dashboard</h2>
     <p>Welcome, <span th:text="${username}">User</span>!</p>
 
+    <!-- Display error message if present -->
+    <div class="alert alert-danger" th:if="${error}" role="alert">
+      <span th:text="${error}">Error message</span>
+    </div>
+
+    <!-- Paid Reservations Section -->
     <div class="card mb-4">
-      <div class="card-header">
-        <h5>Your Reservations</h5>
+      <div class="card-header bg-success text-white">
+        <h5>Your Paid Reservations</h5>
       </div>
       <div class="card-body">
-        <p>You don't have any reservations yet.</p>
-        <a th:href="@{/parking}" class="btn btn-primary">Find Parking</a>
+        <div th:if="${paidReservations != null && !paidReservations.isEmpty()}">
+          <div class="table-responsive">
+            <table class="table table-striped">
+              <thead>
+              <tr>
+                <th>License Plate</th>
+                <th>Location</th>
+                <th>Start Time</th>
+                <th>End Time</th>
+                <th>Price</th>
+                <th>Status</th>
+              </tr>
+              </thead>
+              <tbody>
+              <tr th:each="reservation : ${paidReservations}">
+                <td th:text="${reservation.licensePlate}">ABC-123</td>
+                <td th:text="${reservation.parking != null ? reservation.parking.location : 'N/A'}">Downtown Parking</td>
+                <td th:text="${#temporals.format(reservation.startTime, 'yyyy-MM-dd HH:mm')}">2025-01-01 10:00</td>
+                <td th:text="${#temporals.format(reservation.endTime, 'yyyy-MM-dd HH:mm')}">2025-01-01 12:00</td>
+                <td>$<span th:text="${reservation.calculatedPrice}">10.00</span></td>
+                <td><span class="badge bg-success">Paid</span></td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div th:if="${paidReservations == null || paidReservations.isEmpty()}" class="text-center">
+          <p>You don't have any paid reservations yet.</p>
+        </div>
       </div>
+    </div>
+
+    <!-- Unpaid Reservations Section -->
+    <div class="card mb-4">
+      <div class="card-header bg-warning">
+        <h5>Your Pending Reservations</h5>
+      </div>
+      <div class="card-body">
+        <div th:if="${unpaidReservations != null && !unpaidReservations.isEmpty()}">
+          <div class="table-responsive">
+            <table class="table table-striped">
+              <thead>
+              <tr>
+                <th>License Plate</th>
+                <th>Location</th>
+                <th>Start Time</th>
+                <th>End Time</th>
+                <th>Price</th>
+                <th>Action</th>
+              </tr>
+              </thead>
+              <tbody>
+              <tr th:each="reservation : ${unpaidReservations}">
+                <td th:text="${reservation.licensePlate}">ABC-123</td>
+                <td th:text="${reservation.parking != null ? reservation.parking.location : 'N/A'}">Downtown Parking</td>
+                <td th:text="${#temporals.format(reservation.startTime, 'yyyy-MM-dd HH:mm')}">2025-01-01 10:00</td>
+                <td th:text="${#temporals.format(reservation.endTime, 'yyyy-MM-dd HH:mm')}">2025-01-01 12:00</td>
+                <td>$<span th:text="${reservation.calculatedPrice}">10.00</span></td>
+                <td>
+                  <form th:action="@{/parking/reservation/{id}/pay(id=${reservation.id})}" method="post">
+                    <button type="submit" class="btn btn-sm btn-primary">Pay Now</button>
+                  </form>
+                </td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div th:if="${unpaidReservations == null || unpaidReservations.isEmpty()}" class="text-center">
+          <p>You don't have any pending reservations.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-3">
+      <a th:href="@{/parking}" class="btn btn-primary">Find Parking</a>
     </div>
   </div>
 </div>

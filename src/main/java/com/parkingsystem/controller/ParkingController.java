@@ -6,6 +6,8 @@ import com.parkingsystem.service.ParkingService;
 import com.parkingsystem.service.ReservationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -51,42 +53,64 @@ public class ParkingController {
         return "user/parking-details";
     }
 
-    // Show reservation form
+    // Show reservation form - requires authentication
     @GetMapping("/{id}/reserve")
     public String showReservationForm(@PathVariable Long id, Model model) {
+        // Log the request to help with debugging
         logger.info("Showing reservation form for parking ID: {}", id);
-        parkingService.getParkingById(id).ifPresent(parking -> {
-            model.addAttribute("parking", parking);
 
-            // Add default times - current time + 1 hour for end time
-            LocalDateTime now = LocalDateTime.now();
-            // Round to next hour
-            LocalDateTime startTime = now.withMinute(0).withSecond(0).withNano(0).plusHours(1);
-            LocalDateTime endTime = startTime.plusHours(1);
+        // Check if user is authenticated
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() ||
+                authentication.getName().equals("anonymousUser")) {
+            logger.warn("Unauthenticated user attempting to access reservation form");
+            return "redirect:/login";
+        }
 
-            model.addAttribute("startTime", startTime);
-            model.addAttribute("endTime", endTime);
-            logger.info("Added default times: start={}, end={}", startTime, endTime);
-        });
-        return "user/reservation-form";
+        try {
+            parkingService.getParkingById(id).ifPresent(parking -> {
+                model.addAttribute("parking", parking);
+
+                // Add default times - current time + 1 hour for end time
+                LocalDateTime now = LocalDateTime.now();
+                // Round to next hour
+                LocalDateTime startTime = now.withMinute(0).withSecond(0).withNano(0).plusHours(1);
+                LocalDateTime endTime = startTime.plusHours(1);
+
+                model.addAttribute("startTime", startTime);
+                model.addAttribute("endTime", endTime);
+                logger.info("Added default times: start={}, end={}", startTime, endTime);
+            });
+            return "user/reservation-form";
+        } catch (Exception e) {
+            logger.error("Error showing reservation form: {}", e.getMessage(), e);
+            model.addAttribute("error", "An error occurred while loading the reservation form: " + e.getMessage());
+            return "error";
+        }
     }
 
-    // Create reservation
+    // Create reservation - requires authentication
     @PostMapping("/{id}/reserve")
     public String createReservation(
             @PathVariable Long id,
             @RequestParam String licensePlate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime,
-            Model model,
-            RedirectAttributes redirectAttributes) {
+            Model model) {
 
         logger.info("Creating reservation: parkingId={}, licensePlate={}, startTime={}, endTime={}",
                 id, licensePlate, startTime, endTime);
 
+        // Check authentication
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() ||
+                authentication.getName().equals("anonymousUser")) {
+            logger.warn("Unauthenticated user attempting to create reservation");
+            return "redirect:/login";
+        }
+
         try {
             Reservation reservation = reservationService.createReservation(licensePlate, startTime, endTime, id);
-
             logger.info("Reservation created successfully with ID: {}", reservation.getId());
 
             // Add reservation to model for the success page
@@ -111,14 +135,21 @@ public class ParkingController {
         }
     }
 
-    // Pay for reservation
+    // Pay for reservation - requires authentication
     @PostMapping("/reservation/{id}/pay")
     public String payReservation(
             @PathVariable Long id,
-            Model model,
-            RedirectAttributes redirectAttributes) {
+            Model model) {
 
         logger.info("Processing payment for reservation ID: {}", id);
+
+        // Check authentication
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() ||
+                authentication.getName().equals("anonymousUser")) {
+            logger.warn("Unauthenticated user attempting to pay for reservation");
+            return "redirect:/login";
+        }
 
         try {
             Reservation reservation = reservationService.updatePaymentStatus(id, true);

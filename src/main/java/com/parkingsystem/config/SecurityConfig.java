@@ -25,25 +25,34 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        // Public paths
-                        .requestMatchers("/", "/parking", "/parking/**", "/css/**", "/js/**", "/images/**").permitAll()
-                        // Admin paths
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
-                        // Attendant paths
-                        .requestMatchers("/attendant/**").hasRole("ATTENDANT")
-                        // User paths - add this section
-                        .requestMatchers("/user/**").hasRole("USER")
-                        // Any other request must be authenticated
+                        // Public paths - always accessible
+                        .requestMatchers("/login", "/signup", "/css/**", "/js/**", "/images/**", "/error").permitAll()
 
+                        // Parking viewing is public, reservation requires authentication
+                        .requestMatchers("/parking").permitAll()
+                        .requestMatchers("/parking/*/reserve").authenticated()
+                        .requestMatchers("/parking/reservation/**").authenticated()
+                        .requestMatchers("/parking/*").permitAll()
+
+                        // Admin paths - require ADMIN role
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+
+                        // Attendant paths - require ATTENDANT role
+                        .requestMatchers("/attendant/**").hasRole("ATTENDANT")
+
+                        // User dashboard - requires USER role
+                        .requestMatchers("/user/**").hasRole("USER")
+
+                        // Any other request must be authenticated
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
                         .loginPage("/login")
-                        .defaultSuccessUrl("/")
+                        .defaultSuccessUrl("/dashboard", true)
                         .permitAll()
                 )
                 .logout(logout -> logout
-                        .logoutSuccessUrl("/")
+                        .logoutSuccessUrl("/login?logout")
                         .permitAll()
                 )
                 // Enable CSRF protection but disable for specific endpoints if needed
