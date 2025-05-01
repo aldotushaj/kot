@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -120,6 +121,10 @@
                     <td>
                         <span th:if="${reservation.paid}" class="badge bg-success">Paid</span>
                         <span th:unless="${reservation.paid}" class="badge bg-warning">Unpaid</span>
+                    </td>
+                    <td>
+                        <span th:if="${reservation.reservedFromApp}" class="badge bg-success">Reserved from APP</span>
+                        <span th:unless="${reservation.reservedFromApp}" class="badge bg-warning">-</span>
                     </td>
                 </tr>
                 <tr th:if="${reservations.isEmpty()}">

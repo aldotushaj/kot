@@ -22,6 +22,7 @@
                 <p><strong>Start Time:</strong> <span th:text="${#temporals.format(reservation.startTime, 'yyyy-MM-dd HH:mm')}">2025-01-01 10:00</span></p>
                 <p><strong>End Time:</strong> <span th:text="${#temporals.format(reservation.endTime, 'yyyy-MM-dd HH:mm')}">2025-01-01 12:00</span></p>
                 <p><strong>Total Price:</strong> $<span th:text="${reservation.calculatedPrice}">10.00</span></p>
+                <p><strong>Reserved from the app </strong> <span th:text="${reservation.reservedFromApp}"> </span></p>
             </div>
         </div>
 

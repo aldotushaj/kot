@@ -1,4 +1,3 @@
-// src/main/java/com/parkingsystem/config/SecurityConfig.java
 package com.parkingsystem.config;
 
 import org.springframework.context.annotation.Bean;
@@ -27,12 +26,15 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(auth -> auth
                         // Public paths
-                        .requestMatchers("/", "/parking", "/parking/**", "/css/**", "/js/**", "/images/**", "/h2-console/**").permitAll()
+                        .requestMatchers("/", "/parking", "/parking/**", "/css/**", "/js/**", "/images/**").permitAll()
                         // Admin paths
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         // Attendant paths
                         .requestMatchers("/attendant/**").hasRole("ATTENDANT")
+                        // User paths - add this section
+                        .requestMatchers("/user/**").hasRole("USER")
                         // Any other request must be authenticated
+
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
@@ -44,11 +46,11 @@ public class SecurityConfig {
                         .logoutSuccessUrl("/")
                         .permitAll()
                 )
-                // Disable CSRF for H2 Console
+                // Enable CSRF protection but disable for specific endpoints if needed
                 .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/h2-console/**")
+                        .ignoringRequestMatchers("/api/**")
                 )
-                // Allow frames for H2 Console
+                // Set proper header configuration
                 .headers(headers -> headers
                         .frameOptions(frameOptions -> frameOptions
                                 .sameOrigin()

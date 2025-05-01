@@ -6,105 +6,177 @@ import com.parkingsystem.repository.ParkingRepository;
 import com.parkingsystem.repository.ReservationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class ReservationService {
 
-    @Autowired
-    private ReservationRepository reservationRepository;
+    private static final Logger logger = LoggerFactory.getLogger(ReservationService.class);
+
+    private final ReservationRepository reservationRepository;
+    private final ParkingRepository parkingRepository;
 
     @Autowired
-    private ParkingRepository parkingRepository;
+    public ReservationService(ReservationRepository reservationRepository,
+                              ParkingRepository parkingRepository) {
+        this.reservationRepository = reservationRepository;
+        this.parkingRepository = parkingRepository;
+    }
 
     // Create a new reservation
+    @Transactional
     public Reservation createReservation(String licensePlate, LocalDateTime startTime,
                                          LocalDateTime endTime, Long parkingId) {
+        logger.info("Creating reservation for license plate: {}, parking ID: {}, start: {}, end: {}",
+                licensePlate, parkingId, startTime, endTime);
+
+        if (licensePlate == null || licensePlate.trim().isEmpty()) {
+            logger.error("License plate is empty or null");
+            throw new RuntimeException("License plate cannot be empty");
+        }
+
+        if (startTime == null || endTime == null) {
+            logger.error("Start time or end time is null");
+            throw new RuntimeException("Start and end times must be provided");
+        }
+
+        if (endTime.isBefore(startTime) || endTime.isEqual(startTime)) {
+            logger.error("End time {} is before or equal to start time {}", endTime, startTime);
+            throw new RuntimeException("End time must be after start time");
+        }
+
         Optional<Parking> parkingOpt = parkingRepository.findById(parkingId);
 
-        if (parkingOpt.isPresent()) {
-            Parking parking = parkingOpt.get();
+        if (parkingOpt.isEmpty()) {
+            logger.error("Parking with id {} not found", parkingId);
+            throw new RuntimeException("Parking location not found");
+        }
 
-            // Check if there are available spots
-            if (parking.getAvailableSpots() <= 0) {
-                throw new RuntimeException("No available spots in this parking location");
-            }
+        Parking parking = parkingOpt.get();
+        logger.info("Found parking: {}, available spots: {}", parking.getLocation(), parking.getAvailableSpots());
 
-            // Calculate price
-            BigDecimal price = calculatePrice(parking.getHourlyRate(), startTime, endTime);
+        // Check if there are available spots
+        if (parking.getAvailableSpots() <= 0) {
+            logger.error("No available spots in parking {}", parking.getLocation());
+            throw new RuntimeException("No available spots in this parking location");
+        }
 
+        // Calculate price
+        BigDecimal price = calculatePrice(parking.getHourlyRate(), startTime, endTime);
+        logger.info("Calculated price: {}", price);
+
+        try {
             // Create reservation
-            Reservation reservation = new Reservation(licensePlate, startTime, endTime, price, parking);
+          
+            Reservation reservation = new Reservation(licensePlate, startTime, endTime, price, true, parking);
 
             // Update available spots
             parking.setAvailableSpots(parking.getAvailableSpots() - 1);
             parkingRepository.save(parking);
+            logger.info("Updated available spots to: {}", parking.getAvailableSpots());
 
-            return reservationRepository.save(reservation);
-        } else {
-            throw new RuntimeException("Parking location not found");
+            Reservation savedReservation = reservationRepository.save(reservation);
+            logger.info("Reservation created with ID: {}", savedReservation.getId());
+
+            return savedReservation;
+        } catch (Exception e) {
+            logger.error("Error creating reservation: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to create reservation: " + e.getMessage());
         }
     }
 
     // Calculate price based on duration and hourly rate
     private BigDecimal calculatePrice(BigDecimal hourlyRate, LocalDateTime startTime, LocalDateTime endTime) {
-        long hours = Duration.between(startTime, endTime).toHours();
-        if (Duration.between(startTime, endTime).toMinutes() % 60 > 0) {
-            hours++; // Round up to the next hour
+        long minutes = Duration.between(startTime, endTime).toMinutes();
+        long hours = minutes / 60;
+
+        // Round up to the next hour if there are remaining minutes
+        if (minutes % 60 > 0) {
+            hours++;
         }
+
+        // Ensure at least 1 hour is charged
+        hours = Math.max(1, hours);
+
+        logger.info("Calculating price for {} hours at rate {}", hours, hourlyRate);
         return hourlyRate.multiply(BigDecimal.valueOf(hours));
     }
 
     // Get reservation by id
     public Optional<Reservation> getReservationById(Long id) {
+        logger.info("Fetching reservation with ID: {}", id);
         return reservationRepository.findById(id);
     }
 
     // Get all reservations for a parking location
     public List<Reservation> getReservationsByParking(Long parkingId) {
+        logger.info("Fetching reservations for parking ID: {}", parkingId);
         Optional<Parking> parkingOpt = parkingRepository.findById(parkingId);
-        return parkingOpt.map(parking -> reservationRepository.findByParking(parking))
-                .orElseThrow(() -> new RuntimeException("Parking not found"));
+
+        if (parkingOpt.isEmpty()) {
+            logger.error("Parking with ID {} not found", parkingId);
+            throw new RuntimeException("Parking not found");
+        }
+
+        return reservationRepository.findByParking(parkingOpt.get());
     }
 
     // Update payment status
+    @Transactional
     public Reservation updatePaymentStatus(Long reservationId, boolean isPaid) {
+        logger.info("Updating payment status for reservation ID: {} to paid: {}", reservationId, isPaid);
         Optional<Reservation> reservationOpt = reservationRepository.findById(reservationId);
 
-        if (reservationOpt.isPresent()) {
-            Reservation reservation = reservationOpt.get();
-            reservation.setPaid(isPaid);
-            return reservationRepository.save(reservation);
-        } else {
+        if (reservationOpt.isEmpty()) {
+            logger.error("Reservation with ID {} not found", reservationId);
             throw new RuntimeException("Reservation not found");
         }
+
+        Reservation reservation = reservationOpt.get();
+        reservation.setPaid(isPaid);
+        return reservationRepository.save(reservation);
     }
 
     // Cancel reservation
+    @Transactional
     public void cancelReservation(Long reservationId) {
+        logger.info("Cancelling reservation with ID: {}", reservationId);
         Optional<Reservation> reservationOpt = reservationRepository.findById(reservationId);
 
-        if (reservationOpt.isPresent()) {
-            Reservation reservation = reservationOpt.get();
-            Parking parking = reservation.getParking();
-
-            // Update available spots
-            parking.setAvailableSpots(parking.getAvailableSpots() + 1);
-            parkingRepository.save(parking);
-
-            // Delete reservation
-            reservationRepository.deleteById(reservationId);
-        } else {
+        if (reservationOpt.isEmpty()) {
+            logger.error("Reservation with ID {} not found", reservationId);
             throw new RuntimeException("Reservation not found");
         }
+
+        Reservation reservation = reservationOpt.get();
+        Parking parking = reservation.getParking();
+
+        // Update available spots
+        parking.setAvailableSpots(parking.getAvailableSpots() + 1);
+        parkingRepository.save(parking);
+        logger.info("Updated available spots to: {}", parking.getAvailableSpots());
+
+        // Delete reservation
+        reservationRepository.deleteById(reservationId);
+        logger.info("Reservation deleted successfully");
     }
 
     // Find reservations by license plate
     public List<Reservation> findReservationsByLicensePlate(String licensePlate) {
+        logger.info("Finding reservations for license plate: {}", licensePlate);
+        if (licensePlate == null || licensePlate.trim().isEmpty()) {
+            logger.error("License plate is empty or null");
+            throw new RuntimeException("License plate cannot be empty");
+        }
+
         return reservationRepository.findByLicensePlate(licensePlate);
     }
 }

@@ -17,12 +17,6 @@ public class ParkingSystemApplication {
         SpringApplication.run(ParkingSystemApplication.class, args);
     }
 
-    // REMOVE THIS - It's already defined in SecurityConfig.java
-    // @Bean
-    // public PasswordEncoder passwordEncoder() {
-    //     return new BCryptPasswordEncoder();
-    // }
-
     // Inject services through method parameters to avoid circular dependencies
     @Bean
     public CommandLineRunner loadData(UserService userService, ParkingService parkingService) {
@@ -36,6 +30,17 @@ public class ParkingSystemApplication {
             } catch (Exception e) {
                 System.err.println("Error creating admin user: " + e.getMessage());
                 e.printStackTrace(); // Print stack trace for more detailed debugging
+            }
+
+            // Create regular user if not exists
+            try {
+                if (userService.getUserByUsername("user").isEmpty()) {
+                    userService.createUser("user", "password", "USER");
+                    System.out.println("Regular user created successfully");
+                }
+            } catch (Exception e) {
+                System.err.println("Error creating regular user: " + e.getMessage());
+                e.printStackTrace();
             }
 
             // Create some sample parking lots if database is empty

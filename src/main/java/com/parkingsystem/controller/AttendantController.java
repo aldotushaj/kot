@@ -14,7 +14,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -99,8 +98,15 @@ public class AttendantController {
             return "redirect:/attendant/dashboard/" + entry.getParking().getId();
         } catch (RuntimeException e) {
             model.addAttribute("error", e.getMessage());
-            // Redirect back to dashboard
-            return "redirect:/attendant/dashboard/" + vehicleEntryService.getReservationsByEntryId(entryId).getParking().getId();
+
+            // Fixed: Get the parking ID correctly from the entry
+            try {
+                VehicleEntry entry = vehicleEntryService.getVehicleEntryByEntryId(entryId);
+                return "redirect:/attendant/dashboard/" + entry.getParking().getId();
+            } catch (Exception ex) {
+                // If we can't get the entry, redirect to the general attendant page
+                return "redirect:/attendant";
+            }
         }
     }
 

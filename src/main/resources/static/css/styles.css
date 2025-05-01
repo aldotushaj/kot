@@ -2,33 +2,59 @@
 
 body {
     padding-bottom: 60px; /* For footer spacing */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .navbar {
     margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 footer {
     position: fixed;
     bottom: 0;
     width: 100%;
+    box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .card {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     margin-bottom: 20px;
+    border-radius: 8px;
+    border: none;
 }
 
 .card-header {
     background-color: #f8f9fa;
+    border-bottom: 1px solid #eee;
+    padding: 15px 20px;
+    border-radius: 8px 8px 0 0;
+}
+
+.card-body {
+    padding: 20px;
 }
 
 .table {
     margin-bottom: 20px;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.table th {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.table td, .table th {
+    padding: 12px 15px;
+    vertical-align: middle;
 }
 
 .badge {
-    font-size: 0.9em;
+    font-size: 0.85em;
+    padding: 0.35em 0.65em;
+    font-weight: 500;
 }
 
 /* Status badges */
@@ -46,14 +72,21 @@ footer {
 }
 
 /* Buttons */
+.btn {
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
 .btn-primary {
-    background-color: #007bff;
-    border-color: #007bff;
+    background-color: #0d6efd;
+    border-color: #0d6efd;
 }
 
 .btn-primary:hover {
-    background-color: #0069d9;
-    border-color: #0062cc;
+    background-color: #0b5ed7;
+    border-color: #0a58ca;
 }
 
 .btn-warning {
@@ -78,9 +111,21 @@ footer {
     border-color: #bd2130;
 }
 
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
 /* Form styles */
 .form-label {
     font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.form-control {
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    border: 1px solid #ced4da;
 }
 
 .form-control:focus {
@@ -88,12 +133,19 @@ footer {
     box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
 
+.form-select {
+    padding: 0.5rem 2.25rem 0.5rem 0.75rem;
+    border-radius: 6px;
+    border: 1px solid #ced4da;
+}
+
 /* Dashboard counters */
 .dashboard-counter {
     text-align: center;
-    padding: 15px;
-    border-radius: 5px;
+    padding: 20px;
+    border-radius: 8px;
     margin-bottom: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .dashboard-counter h3 {
@@ -122,6 +174,33 @@ footer {
     color: #856404;
 }
 
+/* Page headers */
+h2 {
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #eee;
+}
+
+/* Jumbotron styling for homepage */
+.jumbotron {
+    background-color: #f8f9fa;
+    padding: 3rem 2rem;
+    margin-bottom: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* Alert customization */
+.alert {
+    border: none;
+    border-radius: 6px;
+    padding: 1rem;
+}
+
+.alert-dismissible .btn-close {
+    padding: 1.25rem 1rem;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .btn {
@@ -134,5 +213,13 @@ footer {
 
     .card-body {
         padding: 1rem;
+    }
+
+    .jumbotron {
+        padding: 2rem 1rem;
+    }
+
+    h2 {
+        font-size: 1.75rem;
     }
 }

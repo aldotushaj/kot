@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Payment Error</title>
+</head>
+<body>
+<div th:replace="~{layout/main :: body(content=~{::content})}">
+    <div th:fragment="content">
+        <div class="alert alert-danger">
+            <h4>Payment Failed</h4>
+            <p th:text="${error}">An error occurred during the payment process.</p>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>What Happened?</h5>
+            </div>
+            <div class="card-body">
+                <p>Your payment could not be processed due to an error. This could be due to:</p>
+                <ul>
+                    <li>The reservation has been cancelled or no longer exists</li>
+                    <li>The payment was already processed</li>
+                    <li>A system error occurred during payment processing</li>
+                </ul>
+                <p>You can try the following:</p>
+                <ul>
+                    <li>Try the payment again</li>
+                    <li>Check your reservations</li>
+                    <li>Make a new reservation</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a th:href="@{/parking}" class="btn btn-primary">Browse Parking Locations</a>
+            <a href="javascript:history.back()" class="btn btn-secondary">Go Back</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

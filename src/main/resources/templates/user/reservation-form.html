@@ -9,33 +9,103 @@
     <div th:fragment="content">
         <h2>Reserve a Spot at <span th:text="${parking.location}">Parking Location</span></h2>
 
+        <div class="alert alert-danger" th:if="${error}" role="alert">
+            <strong>Error:</strong> <span th:text="${error}">Error message</span>
+        </div>
+
         <div class="card mb-4">
             <div class="card-body">
                 <form th:action="@{/parking/{id}/reserve(id=${parking.id})}" method="post">
                     <div class="mb-3">
                         <label for="licensePlate" class="form-label">License Plate</label>
-                        <input type="text" class="form-control" id="licensePlate" name="licensePlate" required>
+                        <input type="text" class="form-control" id="licensePlate" name="licensePlate" th:value="${licensePlate}" required>
+                        <div class="form-text">Enter your vehicle's license plate number</div>
                     </div>
 
                     <div class="mb-3">
                         <label for="startTime" class="form-label">Start Time</label>
-                        <input type="datetime-local" class="form-control" id="startTime" name="startTime" required>
+                        <input type="datetime-local" class="form-control" id="startTime" name="startTime"
+                               th:value="${startTime != null ? #temporals.format(startTime, 'yyyy-MM-dd''T''HH:mm') : ''}" required>
+                        <div class="form-text">When do you want your reservation to start?</div>
                     </div>
 
                     <div class="mb-3">
                         <label for="endTime" class="form-label">End Time</label>
-                        <input type="datetime-local" class="form-control" id="endTime" name="endTime" required>
+                        <input type="datetime-local" class="form-control" id="endTime" name="endTime"
+                               th:value="${endTime != null ? #temporals.format(endTime, 'yyyy-MM-dd''T''HH:mm') : ''}" required>
+                        <div class="form-text">When do you want your reservation to end?</div>
                     </div>
 
                     <div class="mb-3">
                         <p><strong>Hourly Rate:</strong> $<span th:text="${parking.hourlyRate}">5.00</span></p>
+                        <p><strong>Available Spots:</strong> <span th:text="${parking.availableSpots}">10</span> out of <span th:text="${parking.totalSpots}">50</span></p>
                     </div>
 
                     <button type="submit" class="btn btn-primary">Calculate Price & Reserve</button>
+                    <a th:href="@{/parking/{id}(id=${parking.id})}" class="btn btn-secondary">Cancel</a>
                 </form>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5>Reservation Guidelines</h5>
+            </div>
+            <div class="card-body">
+                <ul>
+                    <li>Reservations must be made at least 1 hour in advance</li>
+                    <li>Minimum reservation duration is 1 hour</li>
+                    <li>Partial hours are rounded up for pricing</li>
+                    <li>Payment is required to confirm your reservation</li>
+                </ul>
             </div>
         </div>
     </div>
 </div>
+
+<script th:inline="javascript">
+    document.addEventListener('DOMContentLoaded', function() {
+        const startTimeInput = document.getElementById('startTime');
+        const endTimeInput = document.getElementById('endTime');
+
+        // When start time changes, update end time to be 1 hour later
+        startTimeInput.addEventListener('change', function() {
+            const startDate = new Date(startTimeInput.value);
+            const endDate = new Date(startDate);
+            endDate.setHours(endDate.getHours() + 1);
+
+            // Format for datetime-local input
+            const year = endDate.getFullYear();
+            const month = String(endDate.getMonth() + 1).padStart(2, '0');
+            const day = String(endDate.getDate()).padStart(2, '0');
+            const hours = String(endDate.getHours()).padStart(2, '0');
+            const minutes = String(endDate.getMinutes()).padStart(2, '0');
+
+            endTimeInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+        });
+
+        // Form validation
+        const form = document.querySelector('form');
+        form.addEventListener('submit', function(event) {
+            const startDate = new Date(startTimeInput.value);
+            const endDate = new Date(endTimeInput.value);
+            const now = new Date();
+
+            // Check if start time is in the future
+            if (startDate <= now) {
+                alert('Start time must be in the future');
+                event.preventDefault();
+                return;
+            }
+
+            // Check if end time is after start time
+            if (endDate <= startDate) {
+                alert('End time must be after start time');
+                event.preventDefault();
+                return;
+            }
+        });
+    });
+</script>
 </body>
 </html>

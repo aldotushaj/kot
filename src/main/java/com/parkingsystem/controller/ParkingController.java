@@ -9,12 +9,18 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
 import java.time.LocalDateTime;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Controller
 @RequestMapping("/parking")
 public class ParkingController {
+
+    private static final Logger logger = LoggerFactory.getLogger(ParkingController.class);
 
     @Autowired
     private ParkingService parkingService;
@@ -48,8 +54,19 @@ public class ParkingController {
     // Show reservation form
     @GetMapping("/{id}/reserve")
     public String showReservationForm(@PathVariable Long id, Model model) {
+        logger.info("Showing reservation form for parking ID: {}", id);
         parkingService.getParkingById(id).ifPresent(parking -> {
             model.addAttribute("parking", parking);
+
+            // Add default times - current time + 1 hour for end time
+            LocalDateTime now = LocalDateTime.now();
+            // Round to next hour
+            LocalDateTime startTime = now.withMinute(0).withSecond(0).withNano(0).plusHours(1);
+            LocalDateTime endTime = startTime.plusHours(1);
+
+            model.addAttribute("startTime", startTime);
+            model.addAttribute("endTime", endTime);
+            logger.info("Added default times: start={}, end={}", startTime, endTime);
         });
         return "user/reservation-form";
     }
@@ -61,27 +78,59 @@ public class ParkingController {
             @RequestParam String licensePlate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime,
-            Model model) {
+            Model model,
+            RedirectAttributes redirectAttributes) {
+
+        logger.info("Creating reservation: parkingId={}, licensePlate={}, startTime={}, endTime={}",
+                id, licensePlate, startTime, endTime);
 
         try {
             Reservation reservation = reservationService.createReservation(licensePlate, startTime, endTime, id);
+
+            logger.info("Reservation created successfully with ID: {}", reservation.getId());
+
+            // Add reservation to model for the success page
             model.addAttribute("reservation", reservation);
             return "user/reservation-success";
-        } catch (RuntimeException e) {
+
+        } catch (Exception e) {
+            logger.error("Error creating reservation: {}", e.getMessage(), e);
+
+            // Add error message to model for the form page
             model.addAttribute("error", e.getMessage());
+
+            // Re-add the parking information
+            parkingService.getParkingById(id).ifPresent(parking -> {
+                model.addAttribute("parking", parking);
+                model.addAttribute("licensePlate", licensePlate);
+                model.addAttribute("startTime", startTime);
+                model.addAttribute("endTime", endTime);
+            });
+
             return "user/reservation-form";
         }
     }
 
     // Pay for reservation
     @PostMapping("/reservation/{id}/pay")
-    public String payReservation(@PathVariable Long id, Model model) {
+    public String payReservation(
+            @PathVariable Long id,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+
+        logger.info("Processing payment for reservation ID: {}", id);
+
         try {
             Reservation reservation = reservationService.updatePaymentStatus(id, true);
+            logger.info("Payment successful for reservation ID: {}", id);
+
             model.addAttribute("reservation", reservation);
             model.addAttribute("message", "Payment successful");
             return "user/payment-success";
-        } catch (RuntimeException e) {
+
+        } catch (Exception e) {
+            logger.error("Payment error for reservation ID {}: {}", id, e.getMessage(), e);
+
             model.addAttribute("error", e.getMessage());
             return "user/payment-error";
         }

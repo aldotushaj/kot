@@ -8,11 +8,11 @@
         <version>3.4.4</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
-    <groupId>com.parkingtracker</groupId>
-    <artifactId>parking-tracker</artifactId>
+    <groupId>com.parkingsystem</groupId>
+    <artifactId>parking-system</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>parking-tracker</name>
-    <description>parking-tracker</description>
+    <name>parking-system</name>
+    <description>Parking Management System</description>
     <url/>
     <licenses>
         <license/>
