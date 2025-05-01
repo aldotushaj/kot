@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Parking Details</title>
+</head>
+<body>
+<div th:replace="~{layout/main :: body(content=~{::content})}">
+    <div th:fragment="content">
+        <div class="row">
+            <div class="col-md-8">
+                <h2 th:text="${parking.location}">Parking Location</h2>
+
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Parking Information</h5>
+                        <p class="card-text">
+                            <strong>Available Spots:</strong> <span th:text="${parking.availableSpots}">10</span> / <span th:text="${parking.totalSpots}">50</span><br/>
+                            <strong>Rate:</strong> $<span th:text="${parking.hourlyRate}">5.00</span> per hour
+                        </p>
+
+                        <a th:href="@{/parking/{id}/reserve(id=${parking.id})}" class="btn btn-success">Reserve a Spot</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

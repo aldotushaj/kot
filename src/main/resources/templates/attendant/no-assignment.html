@@ -1,0 +1,21 @@
+<!-- src/main/resources/templates/attendant/no-assignment.html -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>No Parking Assignment</title>
+</head>
+<body>
+<div th:replace="~{layout/main :: body(content=~{::content})}">
+    <div th:fragment="content">
+        <div class="alert alert-warning">
+            <h4>No Parking Assignment</h4>
+            <p>You have not been assigned to a parking location yet.</p>
+            <p>Please contact the administrator to get assigned to a parking location.</p>
+        </div>
+
+        <a th:href="@{/}" class="btn btn-primary">Return to Home</a>
+    </div>
+</div>
+</body>
+</html>

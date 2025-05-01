@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Payment Successful</title>
+</head>
+<body>
+<div th:replace="~{layout/main :: body(content=~{::content})}">
+    <div th:fragment="content">
+        <div class="alert alert-success">
+            <h4>Payment Successful!</h4>
+            <p>Your reservation has been fully paid.</p>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Reservation Details</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Location:</strong> <span th:text="${reservation.parking.location}">Downtown Parking</span></p>
+                <p><strong>License Plate:</strong> <span th:text="${reservation.licensePlate}">ABC-123</span></p>
+                <p><strong>Start Time:</strong> <span th:text="${#temporals.format(reservation.startTime, 'yyyy-MM-dd HH:mm')}">2025-01-01 10:00</span></p>
+                <p><strong>End Time:</strong> <span th:text="${#temporals.format(reservation.endTime, 'yyyy-MM-dd HH:mm')}">2025-01-01 12:00</span></p>
+                <p><strong>Total Price:</strong> $<span th:text="${reservation.calculatedPrice}">10.00</span></p>
+                <p><strong>Payment Status:</strong> <span class="badge bg-success">Paid</span></p>
+            </div>
+        </div>
+
+        <a th:href="@{/parking}" class="btn btn-primary">Return to Parking List</a>
+    </div>
+</div>
+</body>
+</html>

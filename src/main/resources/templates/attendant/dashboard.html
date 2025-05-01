@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Attendant Dashboard</title>
+</head>
+<body>
+<div th:replace="~{layout/main :: body(content=~{::content})}">
+    <div th:fragment="content">
+        <h2>Attendant Dashboard: <span th:text="${parking.location}">Parking Location</span></h2>
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Parking Status</h5>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Available Spots:</strong> <span th:text="${parking.availableSpots}">10</span> / <span th:text="${parking.totalSpots}">50</span></p>
+                        <p><strong>Hourly Rate:</strong> $<span th:text="${parking.hourlyRate}">5.00</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Check-in Form -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Register Vehicle Entry</h5>
+                    </div>
+                    <div class="card-body">
+                        <form th:action="@{/attendant/{parkingId}/checkin(parkingId=${parking.id})}" method="post">
+                            <div class="mb-3">
+                                <label for="licensePlate" class="form-label">License Plate</label>
+                                <input type="text" class="form-control" id="licensePlate" name="licensePlate" required>
+                            </div>
+
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="reservedFromApp" name="reservedFromApp">
+                                <label class="form-check-label" for="reservedFromApp">Reserved from app</label>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">Register Check-in</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Search Reservations</h5>
+                    </div>
+                    <div class="card-body">
+                        <form th:action="@{/attendant/{parkingId}/search(parkingId=${parking.id})}" method="get">
+                            <div class="mb-3">
+                                <label for="searchLicensePlate" class="form-label">License Plate</label>
+                                <input type="text" class="form-control" id="searchLicensePlate" name="licensePlate" required>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">Search</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Vehicles -->
+        <h3>Active Vehicles</h3>
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>License Plate</th>
+                    <th>Check-in Time</th>
+                    <th>Reserved From App</th>
+                    <th>Action</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="entry : ${activeEntries}">
+                    <td th:text="${entry.licensePlate}">ABC-123</td>
+                    <td th:text="${#temporals.format(entry.timeIn, 'yyyy-MM-dd HH:mm')}">2025-01-01 10:00</td>
+                    <td>
+                        <span th:if="${entry.reservedFromApp}" class="badge bg-success">Reserved from app</span>
+                        <span th:unless="${entry.reservedFromApp}" class="badge bg-secondary">Walk-in</span>
+                    </td>
+                    <td>
+                        <form th:action="@{/attendant/checkout/{entryId}(entryId=${entry.id})}" method="post">
+                            <button type="submit" class="btn btn-sm btn-warning">Check-out</button>
+                        </form>
+                    </td>
+                </tr>
+                <tr th:if="${activeEntries.isEmpty()}">
+                    <td colspan="4" class="text-center">No active vehicles</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Today's Reservations -->
+        <h3>Today's Reservations</h3>
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>License Plate</th>
+                    <th>Start Time</th>
+                    <th>End Time</th>
+                    <th>Paid</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="reservation : ${reservations}">
+                    <td th:text="${reservation.licensePlate}">ABC-123</td>
+                    <td th:text="${#temporals.format(reservation.startTime, 'yyyy-MM-dd HH:mm')}">2025-01-01 10:00</td>
+                    <td th:text="${#temporals.format(reservation.endTime, 'yyyy-MM-dd HH:mm')}">2025-01-01 12:00</td>
+                    <td>
+                        <span th:if="${reservation.paid}" class="badge bg-success">Paid</span>
+                        <span th:unless="${reservation.paid}" class="badge bg-warning">Unpaid</span>
+                    </td>
+                </tr>
+                <tr th:if="${reservations.isEmpty()}">
+                    <td colspan="4" class="text-center">No reservations for today</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</body>
+</html>

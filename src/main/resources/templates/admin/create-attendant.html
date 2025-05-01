@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Create New Attendant</title>
+</head>
+<body>
+<div th:replace="~{layout/main :: body(content=~{::content})}">
+    <div th:fragment="content">
+        <h2>Create New Attendant</h2>
+
+        <div class="card">
+            <div class="card-body">
+                <form th:action="@{/admin/attendant/create}" method="post">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="username" name="username" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+
+                    <div class="d-flex">
+                        <button type="submit" class="btn btn-primary me-2">Create Attendant</button>
+                        <a th:href="@{/admin/attendants}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Available Parking</title>
+</head>
+<body>
+<div th:replace="~{layout/main :: body(content=~{::content})}">
+    <div th:fragment="content">
+        <h2>Available Parking Locations</h2>
+
+        <div class="row">
+            <div class="col-md-4 mb-4" th:each="parking : ${parkings}">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title" th:text="${parking.location}">Parking Location</h5>
+                        <p class="card-text">
+                            <strong>Available Spots:</strong> <span th:text="${parking.availableSpots}">10</span> / <span th:text="${parking.totalSpots}">50</span><br/>
+                            <strong>Rate:</strong> $<span th:text="${parking.hourlyRate}">5.00</span> per hour
+                        </p>
+                        <a th:href="@{/parking/{id}(id=${parking.id})}" class="btn btn-primary">View Details</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="alert alert-info" th:if="${parkings.isEmpty()}">
+            No available parking locations found.
+        </div>
+    </div>
+</div>
+</body>
+</html>
