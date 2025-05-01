@@ -1,9 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-  <meta charset="UTF-8">
-  <title>Manage Attendants</title>
-</head>
+<head th:replace="~{layout/main :: head}"></head>
 <body>
 <div th:replace="~{layout/main :: body(content=~{::content})}">
   <div th:fragment="content">
