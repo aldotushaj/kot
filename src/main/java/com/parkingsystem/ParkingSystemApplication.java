@@ -7,10 +7,12 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.math.BigDecimal;
-
+import java.util.List;
 @SpringBootApplication
+@EnableScheduling  // Don't forget this annotation to enable scheduled tasks
 public class ParkingSystemApplication {
 
     public static void main(String[] args) {
@@ -62,6 +64,22 @@ public class ParkingSystemApplication {
             } catch (Exception e) {
                 System.err.println("Error creating sample data: " + e.getMessage());
                 e.printStackTrace(); // Print stack trace for more detailed debugging
+            }
+
+            // Fix any inconsistent parking data
+            try {
+                List<Parking> allParkings = parkingService.getAllParkings();
+                for (Parking parking : allParkings) {
+                    if (parking.getAvailableSpots() > parking.getTotalSpots()) {
+                        System.out.println("Fixing inconsistent parking data for: " + parking.getLocation() +
+                                " (was showing " + parking.getAvailableSpots() + "/" + parking.getTotalSpots() + " spots)");
+                        parking.setAvailableSpots(parking.getTotalSpots());
+                        parkingService.updateParking(parking);
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("Error fixing parking data: " + e.getMessage());
+                e.printStackTrace();
             }
         };
     }

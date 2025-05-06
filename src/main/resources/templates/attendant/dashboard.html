@@ -6,6 +6,12 @@
     <div th:fragment="content">
         <h2>Attendant Dashboard: <span th:text="${parking.location}">Parking Location</span></h2>
 
+        <!-- Navigation buttons -->
+        <div class="mb-4">
+            <a th:href="@{/attendant/dashboard/{id}(id=${parking.id})}" class="btn btn-primary active">Today's Dashboard</a>
+            <a th:href="@{/attendant/history/{id}(id=${parking.id})}" class="btn btn-secondary">Reservation History</a>
+        </div>
+
         <div class="row mb-4">
             <div class="col-md-6">
                 <div class="card">
@@ -107,6 +113,7 @@
                     <th>Start Time</th>
                     <th>End Time</th>
                     <th>Paid</th>
+                    <th>Reserved From App</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -119,12 +126,12 @@
                         <span th:unless="${reservation.paid}" class="badge bg-warning">Unpaid</span>
                     </td>
                     <td>
-                        <span th:if="${reservation.reservedFromApp}" class="badge bg-success">Reserved from APP</span>
-                        <span th:unless="${reservation.reservedFromApp}" class="badge bg-warning">-</span>
+                        <span th:if="${reservation.reservedFromApp}" class="badge bg-info">Yes</span>
+                        <span th:unless="${reservation.reservedFromApp}" class="badge bg-secondary">No</span>
                     </td>
                 </tr>
                 <tr th:if="${reservations.isEmpty()}">
-                    <td colspan="4" class="text-center">No reservations for today</td>
+                    <td colspan="5" class="text-center">No reservations for today</td>
                 </tr>
                 </tbody>
             </table>

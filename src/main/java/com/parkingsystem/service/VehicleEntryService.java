@@ -7,6 +7,8 @@ import com.parkingsystem.repository.VehicleEntryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -14,6 +16,8 @@ import java.util.Optional;
 
 @Service
 public class VehicleEntryService {
+
+    private static final Logger logger = LoggerFactory.getLogger(VehicleEntryService.class);
 
     private final VehicleEntryRepository vehicleEntryRepository;
     private final ParkingRepository parkingRepository;
@@ -77,10 +81,16 @@ public class VehicleEntryService {
         // Update timeOut
         entry.setTimeOut(LocalDateTime.now());
 
-        // Update available spots
+        // Update available spots with validation
         Parking parking = entry.getParking();
-        parking.setAvailableSpots(parking.getAvailableSpots() + 1);
-        parkingRepository.save(parking);
+        int newAvailableSpots = parking.getAvailableSpots() + 1;
+        if (newAvailableSpots <= parking.getTotalSpots()) {
+            parking.setAvailableSpots(newAvailableSpots);
+            parkingRepository.save(parking);
+        } else {
+            logger.error("Cannot update spots for parking ID: {} - would exceed total spots", parking.getId());
+            // Don't update spots if it would exceed total
+        }
 
         return vehicleEntryRepository.save(entry);
     }

@@ -1,0 +1,65 @@
+<!-- Create: src/main/resources/templates/user/reservation-history.html -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/main :: head}"></head>
+<body>
+<div th:replace="~{layout/main :: body(content=~{::content})}">
+  <div th:fragment="content">
+    <h2>Reservation History</h2>
+    <p>Welcome, <span th:text="${username}">User</span>!</p>
+
+    <!-- Display error message if present -->
+    <div class="alert alert-danger" th:if="${error}" role="alert">
+      <span th:text="${error}">Error message</span>
+    </div>
+
+    <!-- Navigation buttons -->
+    <div class="mb-4">
+      <a th:href="@{/user/dashboard}" class="btn btn-primary">Active Reservations</a>
+      <a th:href="@{/parking}" class="btn btn-success">Find Parking</a>
+    </div>
+
+    <!-- Past Reservations Section -->
+    <div class="card mb-4">
+      <div class="card-header bg-secondary text-white">
+        <h5>Past Reservations</h5>
+      </div>
+      <div class="card-body">
+        <div th:if="${pastReservations != null && !pastReservations.isEmpty()}">
+          <div class="table-responsive">
+            <table class="table table-striped">
+              <thead>
+              <tr>
+                <th>License Plate</th>
+                <th>Location</th>
+                <th>Start Time</th>
+                <th>End Time</th>
+                <th>Price</th>
+                <th>Status</th>
+              </tr>
+              </thead>
+              <tbody>
+              <tr th:each="reservation : ${pastReservations}">
+                <td th:text="${reservation.licensePlate}">ABC-123</td>
+                <td th:text="${reservation.parking != null ? reservation.parking.location : 'N/A'}">Downtown Parking</td>
+                <td th:text="${#temporals.format(reservation.startTime, 'yyyy-MM-dd HH:mm')}">2025-01-01 10:00</td>
+                <td th:text="${#temporals.format(reservation.endTime, 'yyyy-MM-dd HH:mm')}">2025-01-01 12:00</td>
+                <td>$<span th:text="${reservation.calculatedPrice}">10.00</span></td>
+                <td>
+                  <span th:if="${reservation.paid}" class="badge bg-success">Paid</span>
+                  <span th:unless="${reservation.paid}" class="badge bg-warning">Unpaid</span>
+                </td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div th:if="${pastReservations == null || pastReservations.isEmpty()}" class="text-center">
+          <p>You don't have any past reservations.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

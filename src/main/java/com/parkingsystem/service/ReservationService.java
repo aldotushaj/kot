@@ -64,7 +64,7 @@ public class ReservationService {
         Parking parking = parkingOpt.get();
         logger.info("Found parking: {}, available spots: {}", parking.getLocation(), parking.getAvailableSpots());
 
-        // Check if there are available spots
+        // Check if there are available spots - but do not change them yet
         if (parking.getAvailableSpots() <= 0) {
             logger.error("No available spots in parking {}", parking.getLocation());
             throw new RuntimeException("No available spots in this parking location");
@@ -86,11 +86,7 @@ public class ReservationService {
                     .parking(parking)
                     .build();
 
-            // Update available spots
-            parking.setAvailableSpots(parking.getAvailableSpots() - 1);
-            parkingRepository.save(parking);
-            logger.info("Updated available spots to: {}", parking.getAvailableSpots());
-
+            // Save the reservation without changing available spots
             Reservation savedReservation = reservationRepository.save(reservation);
             logger.info("Reservation created with ID: {}", savedReservation.getId());
 
@@ -100,7 +96,6 @@ public class ReservationService {
             throw new RuntimeException("Failed to create reservation: " + e.getMessage());
         }
     }
-
     // Calculate price based on duration and hourly rate
     private BigDecimal calculatePrice(BigDecimal hourlyRate, LocalDateTime startTime, LocalDateTime endTime) {
         long minutes = Duration.between(startTime, endTime).toMinutes();
@@ -137,6 +132,23 @@ public class ReservationService {
         return reservationRepository.findByParking(parkingOpt.get());
     }
 
+    // Get reservations for a parking within a specific time range
+    public List<Reservation> getReservationsByParkingAndTimeRange(Long parkingId,
+                                                                  LocalDateTime start,
+                                                                  LocalDateTime end) {
+        logger.info("Fetching reservations for parking ID: {} between {} and {}",
+                parkingId, start, end);
+
+        Optional<Parking> parkingOpt = parkingRepository.findById(parkingId);
+
+        if (parkingOpt.isEmpty()) {
+            logger.error("Parking with ID {} not found", parkingId);
+            throw new RuntimeException("Parking not found");
+        }
+
+        return reservationRepository.findByParkingAndStartTimeBetween(parkingOpt.get(), start, end);
+    }
+
     // Update payment status
     @Transactional
     public Reservation updatePaymentStatus(Long reservationId, boolean isPaid) {
@@ -149,10 +161,26 @@ public class ReservationService {
         }
 
         Reservation reservation = reservationOpt.get();
+
+        // Only update available spots if the reservation is being marked as paid
+        // and wasn't previously paid
+        if (isPaid && !reservation.isPaid()) {
+            Parking parking = reservation.getParking();
+
+            // Decrement available spots
+            if (parking.getAvailableSpots() > 0) {
+                parking.setAvailableSpots(parking.getAvailableSpots() - 1);
+                parkingRepository.save(parking);
+                logger.info("Updated available spots to: {} after payment", parking.getAvailableSpots());
+            } else {
+                logger.warn("No available spots to decrement for parking ID: {}", parking.getId());
+                // You might want to handle this case differently - potentially notify admin
+            }
+        }
+
         reservation.setPaid(isPaid);
         return reservationRepository.save(reservation);
     }
-
     // Cancel reservation
     @Transactional
     public void cancelReservation(Long reservationId) {
@@ -167,16 +195,20 @@ public class ReservationService {
         Reservation reservation = reservationOpt.get();
         Parking parking = reservation.getParking();
 
-        // Update available spots
-        parking.setAvailableSpots(parking.getAvailableSpots() + 1);
-        parkingRepository.save(parking);
-        logger.info("Updated available spots to: {}", parking.getAvailableSpots());
+        // Update available spots - with validation check
+        int newAvailableSpots = parking.getAvailableSpots() + 1;
+        if (newAvailableSpots <= parking.getTotalSpots()) {
+            parking.setAvailableSpots(newAvailableSpots);
+            parkingRepository.save(parking);
+            logger.info("Updated available spots to: {}", parking.getAvailableSpots());
+        } else {
+            logger.error("Cannot update spots for parking ID: {} - would exceed total spots", parking.getId());
+        }
 
         // Delete reservation
         reservationRepository.deleteById(reservationId);
         logger.info("Reservation deleted successfully");
     }
-
     // Find reservations by license plate
     public List<Reservation> findReservationsByLicensePlate(String licensePlate) {
         logger.info("Finding reservations for license plate: {}", licensePlate);
@@ -246,4 +278,6 @@ public class ReservationService {
             return new ArrayList<>();
         }
     }
+
+
 }

@@ -14,8 +14,13 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/attendant")
@@ -49,23 +54,51 @@ public class AttendantController {
         }
     }
 
-    // Show dashboard for the assigned parking lot
+    // Show dashboard for the assigned parking lot with today's reservations
     @GetMapping("/dashboard/{parkingId}")
     public String showDashboard(@PathVariable Long parkingId, Model model) {
         // Check if parking exists
         parkingService.getParkingById(parkingId).ifPresent(parking -> {
-            // Get active entries and reservations for this parking
+            // Get active entries and today's reservations for this parking
             List<VehicleEntry> activeEntries = vehicleEntryService.getActiveEntriesByParking(parkingId);
-            List<Reservation> currentReservations = reservationService.getReservationsByParking(parkingId);
+
+            // Get today's reservations
+            LocalDateTime startOfDay = LocalDateTime.now().with(LocalTime.MIN);
+            LocalDateTime endOfDay = LocalDateTime.now().with(LocalTime.MAX);
+
+            List<Reservation> todaysReservations = reservationService.getReservationsByParkingAndTimeRange(
+                    parkingId, startOfDay, endOfDay);
 
             model.addAttribute("parking", parking);
             model.addAttribute("activeEntries", activeEntries);
-            model.addAttribute("reservations", currentReservations);
+            model.addAttribute("reservations", todaysReservations);
         });
 
         return "attendant/dashboard";
     }
 
+    // Show reservation history for the parking lot
+    @GetMapping("/history/{parkingId}")
+    public String showReservationHistory(@PathVariable Long parkingId, Model model) {
+        // Check if parking exists
+        parkingService.getParkingById(parkingId).ifPresent(parking -> {
+            // Get all reservations for this parking
+            List<Reservation> allReservations = reservationService.getReservationsByParking(parkingId);
+
+            // Filter to exclude today's reservations
+            LocalDateTime startOfDay = LocalDateTime.now().with(LocalTime.MIN);
+            List<Reservation> pastReservations = allReservations.stream()
+                    .filter(r -> r.getEndTime() != null) // Add null check
+                    .filter(r -> r.getEndTime().isBefore(startOfDay))
+                    .sorted(Comparator.comparing(Reservation::getEndTime).reversed())
+                    .collect(Collectors.toList());
+
+            model.addAttribute("parking", parking);
+            model.addAttribute("pastReservations", pastReservations);
+        });
+
+        return "attendant/reservation-history";
+    }
     // Register vehicle check-in
     @PostMapping("/{parkingId}/checkin")
     public String registerVehicleEntry(

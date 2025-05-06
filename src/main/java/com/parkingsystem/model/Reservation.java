@@ -27,6 +27,11 @@ public class Reservation {
     private BigDecimal calculatedPrice;
     private boolean isPaid;
     private boolean reservedFromApp;
+    // Modify: src/main/java/com/parkingsystem/model/Reservation.java
+// Add this field to the class:
+    private boolean processedExpiration = false;
+
+
 
     @ManyToOne
     private Parking parking;
