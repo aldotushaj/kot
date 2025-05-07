@@ -6,8 +6,9 @@
     <div th:fragment="content">
         <h2>Reserve a Spot at <span th:text="${parking.location}">Parking Location</span></h2>
 
-        <div class="alert alert-danger" th:if="${error}" role="alert">
-            <strong>Error:</strong> <span th:text="${error}">Error message</span>
+        <!-- Show only one error message -->
+        <div class="alert alert-danger" th:if="${reservationError}" role="alert">
+            <strong>Error:</strong> <span th:text="${reservationError}">Error message</span>
         </div>
 
         <div class="card mb-4">
@@ -81,19 +82,12 @@
             endTimeInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
         });
 
-        // Form validation
+        // Simple form validation - only check if end time is after start time
         const form = document.querySelector('form');
         form.addEventListener('submit', function(event) {
             const startDate = new Date(startTimeInput.value);
             const endDate = new Date(endTimeInput.value);
             const now = new Date();
-
-            // Check if start time is in the future
-            if (startDate <= now) {
-                alert('Start time must be in the future');
-                event.preventDefault();
-                return;
-            }
 
             // Check if end time is after start time
             if (endDate <= startDate) {

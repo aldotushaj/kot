@@ -53,7 +53,12 @@ public class ReservationService {
             logger.error("End time {} is before or equal to start time {}", endTime, startTime);
             throw new RuntimeException("End time must be after start time");
         }
-
+        // Add validation for early morning hours that might be intended for next day
+        LocalDateTime now = LocalDateTime.now();
+        if (startTime.isBefore(now)) {
+            logger.error("Start time {} is in the past (current time: {})", startTime, now);
+            throw new RuntimeException("Please select a future time for your reservation. For early morning hours (midnight to 6 AM), make sure you've selected tomorrow's date.");
+        }
         Optional<Parking> parkingOpt = parkingRepository.findById(parkingId);
 
         if (parkingOpt.isEmpty()) {

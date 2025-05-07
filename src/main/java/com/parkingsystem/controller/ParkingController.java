@@ -96,7 +96,8 @@ public class ParkingController {
             @RequestParam String licensePlate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime,
-            Model model) {
+            Model model,
+            RedirectAttributes redirectAttributes) {
 
         logger.info("Creating reservation: parkingId={}, licensePlate={}, startTime={}, endTime={}",
                 id, licensePlate, startTime, endTime);
@@ -112,8 +113,28 @@ public class ParkingController {
         // Get current username
         String username = authentication.getName();
 
+        // Check if start time is in the past
+        LocalDateTime now = LocalDateTime.now();
+        if (startTime.isBefore(now)) {
+            String errorMessage = "You selected a time that has already passed. Please choose a future time.";
+
+            // Only set the error attribute once
+            model.addAttribute("reservationError", errorMessage);
+
+
+            // Re-add the parking information
+            parkingService.getParkingById(id).ifPresent(parking -> {
+                model.addAttribute("parking", parking);
+                model.addAttribute("licensePlate", licensePlate);
+                model.addAttribute("startTime", now.plusHours(1));  // Suggest 1 hour from now
+                model.addAttribute("endTime", now.plusHours(2));    // Suggest 2 hours from now
+            });
+
+            return "user/reservation-form";
+        }
+
         try {
-            // Pass username to reservation service
+            // Continue with the reservation creation
             Reservation reservation = reservationService.createReservation(
                     licensePlate, startTime, endTime, id, username);
             logger.info("Reservation created successfully with ID: {}", reservation.getId());
@@ -125,21 +146,20 @@ public class ParkingController {
         } catch (Exception e) {
             logger.error("Error creating reservation: {}", e.getMessage(), e);
 
-            // Add error message to model for the form page
-            model.addAttribute("error", e.getMessage());
+            // Add error message to model for the form page (only one error message)
+            model.addAttribute("reservationError", e.getMessage());
 
             // Re-add the parking information
             parkingService.getParkingById(id).ifPresent(parking -> {
                 model.addAttribute("parking", parking);
                 model.addAttribute("licensePlate", licensePlate);
-                model.addAttribute("startTime", startTime);
-                model.addAttribute("endTime", endTime);
+                model.addAttribute("startTime", now.plusHours(1));
+                model.addAttribute("endTime", now.plusHours(2));
             });
 
             return "user/reservation-form";
         }
     }
-
     // Pay for reservation - requires authentication
     @PostMapping("/reservation/{id}/pay")
     public String payReservation(
