@@ -82,14 +82,12 @@
             endTimeInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
         });
 
-        // Simple form validation - only check if end time is after start time
+        // Only validate that end time is after start time
         const form = document.querySelector('form');
         form.addEventListener('submit', function(event) {
             const startDate = new Date(startTimeInput.value);
             const endDate = new Date(endTimeInput.value);
-            const now = new Date();
 
-            // Check if end time is after start time
             if (endDate <= startDate) {
                 alert('End time must be after start time');
                 event.preventDefault();

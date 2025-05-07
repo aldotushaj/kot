@@ -121,13 +121,13 @@ public class ParkingController {
             // Only set the error attribute once
             model.addAttribute("reservationError", errorMessage);
 
-
-            // Re-add the parking information
+            // Re-add the parking information without suggesting different times
             parkingService.getParkingById(id).ifPresent(parking -> {
                 model.addAttribute("parking", parking);
                 model.addAttribute("licensePlate", licensePlate);
-                model.addAttribute("startTime", now.plusHours(1));  // Suggest 1 hour from now
-                model.addAttribute("endTime", now.plusHours(2));    // Suggest 2 hours from now
+                // Keep the original times selected by the user
+                model.addAttribute("startTime", startTime);
+                model.addAttribute("endTime", endTime);
             });
 
             return "user/reservation-form";
