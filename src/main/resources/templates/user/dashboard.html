@@ -53,7 +53,7 @@
     <!-- Unpaid Reservations Section -->
     <div class="card mb-4">
       <div class="card-header bg-warning">
-        <h5>Your Pending Reservations</h5>
+        <h5>Your Pending Reservations (You can´t reserve if you don´t pay) </h5>
       </div>
       <div class="card-body">
         <div th:if="${unpaidReservations != null && !unpaidReservations.isEmpty()}">
@@ -94,6 +94,7 @@
 
     <div class="mt-3">
       <a th:href="@{/parking}" class="btn btn-primary">Find Parking</a>
+      <a th:href="@{/user/history}" class="btn btn-secondary">View Reservation History</a>
     </div>
   </div>
 </div>

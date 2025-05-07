@@ -10,4 +10,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     List<Reservation> findByParking(Parking parking);
     List<Reservation> findByParkingAndStartTimeBetween(Parking parking, LocalDateTime start, LocalDateTime end);
     List<Reservation> findByLicensePlate(String licensePlate);
+
+    // Add this method to find reservations by username
+    List<Reservation> findByUsername(String username);
 }

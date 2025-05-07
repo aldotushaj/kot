@@ -109,8 +109,13 @@ public class ParkingController {
             return "redirect:/login";
         }
 
+        // Get current username
+        String username = authentication.getName();
+
         try {
-            Reservation reservation = reservationService.createReservation(licensePlate, startTime, endTime, id);
+            // Pass username to reservation service
+            Reservation reservation = reservationService.createReservation(
+                    licensePlate, startTime, endTime, id, username);
             logger.info("Reservation created successfully with ID: {}", reservation.getId());
 
             // Add reservation to model for the success page

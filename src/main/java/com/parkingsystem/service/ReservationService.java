@@ -35,9 +35,9 @@ public class ReservationService {
     // Create a new reservation
     @Transactional
     public Reservation createReservation(String licensePlate, LocalDateTime startTime,
-                                         LocalDateTime endTime, Long parkingId) {
-        logger.info("Creating reservation for license plate: {}, parking ID: {}, start: {}, end: {}",
-                licensePlate, parkingId, startTime, endTime);
+                                         LocalDateTime endTime, Long parkingId, String username) {
+        logger.info("Creating reservation for license plate: {}, parking ID: {}, start: {}, end: {}, user: {}",
+                licensePlate, parkingId, startTime, endTime, username);
 
         if (licensePlate == null || licensePlate.trim().isEmpty()) {
             logger.error("License plate is empty or null");
@@ -84,6 +84,7 @@ public class ReservationService {
                     .isPaid(false)
                     .reservedFromApp(true)
                     .parking(parking)
+                    .username(username) // Add username here
                     .build();
 
             // Save the reservation without changing available spots
@@ -96,6 +97,7 @@ public class ReservationService {
             throw new RuntimeException("Failed to create reservation: " + e.getMessage());
         }
     }
+
     // Calculate price based on duration and hourly rate
     private BigDecimal calculatePrice(BigDecimal hourlyRate, LocalDateTime startTime, LocalDateTime endTime) {
         long minutes = Duration.between(startTime, endTime).toMinutes();
@@ -181,6 +183,7 @@ public class ReservationService {
         reservation.setPaid(isPaid);
         return reservationRepository.save(reservation);
     }
+
     // Cancel reservation
     @Transactional
     public void cancelReservation(Long reservationId) {
@@ -209,6 +212,7 @@ public class ReservationService {
         reservationRepository.deleteById(reservationId);
         logger.info("Reservation deleted successfully");
     }
+
     // Find reservations by license plate
     public List<Reservation> findReservationsByLicensePlate(String licensePlate) {
         logger.info("Finding reservations for license plate: {}", licensePlate);
@@ -278,6 +282,4 @@ public class ReservationService {
             return new ArrayList<>();
         }
     }
-
-
 }

@@ -27,18 +27,17 @@ public class Reservation {
     private BigDecimal calculatedPrice;
     private boolean isPaid;
     private boolean reservedFromApp;
-    // Modify: src/main/java/com/parkingsystem/model/Reservation.java
-// Add this field to the class:
     private boolean processedExpiration = false;
 
-
+    // Add this field to track who made the reservation
+    private String username;
 
     @ManyToOne
     private Parking parking;
 
     // Constructor with all necessary fields
     public Reservation(String licensePlate, LocalDateTime startTime, LocalDateTime endTime,
-                       BigDecimal calculatedPrice, boolean isPaid, Parking parking) {
+                       BigDecimal calculatedPrice, boolean isPaid, Parking parking, String username) {
         this.licensePlate = licensePlate;
         this.startTime = startTime;
         this.endTime = endTime;
@@ -46,5 +45,6 @@ public class Reservation {
         this.isPaid = isPaid;
         this.reservedFromApp = true;
         this.parking = parking;
+        this.username = username;
     }
 }

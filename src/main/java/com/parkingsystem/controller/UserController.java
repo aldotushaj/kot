@@ -34,40 +34,60 @@ public class UserController {
 
         try {
             LocalDateTime now = LocalDateTime.now();
-            List<Reservation> allReservations = reservationRepository.findAll();
+
+            // Use the new repository method to get only the current user's reservations
+            List<Reservation> userReservations = reservationRepository.findByUsername(username);
+
+            if (userReservations == null) {
+                userReservations = new ArrayList<>();
+            }
+
+            logger.info("Found {} reservations for user {}", userReservations.size(), username);
 
             // Filter for active reservations (current time is between start and end times)
-            // Adding null checks to prevent NullPointerException
-            List<Reservation> activeReservations = allReservations.stream()
+            List<Reservation> activeReservations = userReservations.stream()
                     .filter(r -> r.getStartTime() != null && r.getEndTime() != null)
                     .filter(r -> r.getStartTime().isBefore(now) && r.getEndTime().isAfter(now))
                     .collect(Collectors.toList());
 
             // Filter for upcoming reservations (start time is in the future)
-            // Adding null check to prevent NullPointerException
-            List<Reservation> upcomingReservations = allReservations.stream()
+            List<Reservation> upcomingReservations = userReservations.stream()
                     .filter(r -> r.getStartTime() != null)
                     .filter(r -> r.getStartTime().isAfter(now))
                     .sorted(Comparator.comparing(Reservation::getStartTime))
                     .collect(Collectors.toList());
 
+            // Create paid and unpaid lists for the dashboard
+            List<Reservation> paidReservations = userReservations.stream()
+                    .filter(Reservation::isPaid)
+                    .collect(Collectors.toList());
+
+            List<Reservation> unpaidReservations = userReservations.stream()
+                    .filter(r -> !r.isPaid())
+                    .collect(Collectors.toList());
+
             // Add lists to the model
             model.addAttribute("activeReservations", activeReservations);
             model.addAttribute("upcomingReservations", upcomingReservations);
+            model.addAttribute("paidReservations", paidReservations);
+            model.addAttribute("unpaidReservations", unpaidReservations);
 
-            logger.info("Added {} active and {} upcoming reservations to model",
-                    activeReservations.size(), upcomingReservations.size());
+            logger.info("Added {} active, {} upcoming, {} paid and {} unpaid reservations to model",
+                    activeReservations.size(), upcomingReservations.size(),
+                    paidReservations.size(), unpaidReservations.size());
         } catch (Exception e) {
             logger.error("Error retrieving reservations: {}", e.getMessage(), e);
             model.addAttribute("activeReservations", new ArrayList<>());
             model.addAttribute("upcomingReservations", new ArrayList<>());
+            model.addAttribute("paidReservations", new ArrayList<>());
+            model.addAttribute("unpaidReservations", new ArrayList<>());
             model.addAttribute("error", "Could not retrieve reservations: " + e.getMessage());
         }
 
         return "user/dashboard";
     }
 
-    // Add new endpoint for reservation history
+    // Update the reservation history method too
     @GetMapping("/history")
     public String reservationHistory(Model model, Authentication authentication) {
         String username = authentication.getName();
@@ -75,18 +95,24 @@ public class UserController {
 
         try {
             LocalDateTime now = LocalDateTime.now();
-            List<Reservation> allReservations = reservationRepository.findAll();
+
+            // Get only the current user's reservations
+            List<Reservation> userReservations = reservationRepository.findByUsername(username);
+
+            if (userReservations == null) {
+                userReservations = new ArrayList<>();
+            }
 
             // Filter for past reservations (end time is in the past)
-            // Adding null check to prevent NullPointerException
-            List<Reservation> pastReservations = allReservations.stream()
+            List<Reservation> pastReservations = userReservations.stream()
                     .filter(r -> r.getEndTime() != null)
                     .filter(r -> r.getEndTime().isBefore(now))
                     .sorted(Comparator.comparing(Reservation::getEndTime).reversed())
                     .collect(Collectors.toList());
 
             model.addAttribute("pastReservations", pastReservations);
-            logger.info("Added {} past reservations to history model", pastReservations.size());
+            logger.info("Added {} past reservations to history model for user {}",
+                    pastReservations.size(), username);
 
         } catch (Exception e) {
             logger.error("Error retrieving reservation history: {}", e.getMessage(), e);
