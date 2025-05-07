@@ -88,11 +88,10 @@ public class AttendantController {
             // Filter to exclude today's reservations
             LocalDateTime startOfDay = LocalDateTime.now().with(LocalTime.MIN);
             List<Reservation> pastReservations = allReservations.stream()
-                    .filter(r -> r.getEndTime() != null) // Add null check
+                    .filter(r -> r.getEndTime() != null)
                     .filter(r -> r.getEndTime().isBefore(startOfDay))
-                    .sorted(Comparator.comparing(Reservation::getEndTime).reversed())
+                    .sorted((r1, r2) -> r2.getEndTime().compareTo(r1.getEndTime())) // Compare in reverse order
                     .collect(Collectors.toList());
-
             model.addAttribute("parking", parking);
             model.addAttribute("pastReservations", pastReservations);
         });

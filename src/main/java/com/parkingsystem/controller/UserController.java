@@ -104,10 +104,11 @@ public class UserController {
             }
 
             // Filter for past reservations (end time is in the past)
+            // Alternative approach - more explicit
             List<Reservation> pastReservations = userReservations.stream()
                     .filter(r -> r.getEndTime() != null)
                     .filter(r -> r.getEndTime().isBefore(now))
-                    .sorted(Comparator.comparing(Reservation::getEndTime).reversed())
+                    .sorted((r1, r2) -> r2.getEndTime().compareTo(r1.getEndTime()))  // Compare in reverse order
                     .collect(Collectors.toList());
 
             model.addAttribute("pastReservations", pastReservations);
