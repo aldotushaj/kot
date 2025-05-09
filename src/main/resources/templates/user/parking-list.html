@@ -10,9 +10,14 @@
             <div class="col-md-4 mb-4" th:each="parking : ${parkings}">
                 <div class="card">
                     <div class="card-body">
-                        <h5 class="card-title" th:text="${parking.location}">Parking Location</h5>
+                        <h5 class="card-title">
+                            <span style="text-decoration: underline;" th:text="${parking.location}">Parking Location</span>
+                        </h5>
                         <p class="card-text">
-                            <strong>Available Spots:</strong> <span th:text="${parking.availableSpots}">10</span> / <span th:text="${parking.totalSpots}">50</span><br/>
+                            <strong>Available Spots:</strong>
+                            <span th:class="${parking.availableSpots > 0 ? 'text-success fw-bold' : 'text-danger fw-bold'}"
+                                  th:text="${parking.availableSpots}">10</span> /
+                            <span th:text="${parking.totalSpots}">50</span><br/>
                             <strong>Rate:</strong> $<span th:text="${parking.hourlyRate}">5.00</span> per hour
                         </p>
                         <a th:href="@{/parking/{id}(id=${parking.id})}" class="btn btn-primary">View Details</a>
