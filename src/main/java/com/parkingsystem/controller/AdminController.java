@@ -42,10 +42,11 @@ public class AdminController {
             @RequestParam String location,
             @RequestParam int totalSpots,
             @RequestParam BigDecimal hourlyRate,
+            @RequestParam(required = false) String mapLink,
             Model model) {
 
         try {
-            Parking parking = parkingService.createParking(location, totalSpots, hourlyRate);
+            Parking parking = parkingService.createParking(location, totalSpots, hourlyRate, mapLink);
             model.addAttribute("message", "Parking location created successfully");
             return "redirect:/admin/dashboard";
         } catch (Exception e) {
@@ -70,6 +71,7 @@ public class AdminController {
             @RequestParam String location,
             @RequestParam int totalSpots,
             @RequestParam BigDecimal hourlyRate,
+            @RequestParam(required = false) String mapLink,
             Model model) {
 
         Optional<Parking> parkingOpt = parkingService.getParkingById(id);
@@ -79,6 +81,7 @@ public class AdminController {
             parking.setLocation(location);
             parking.setTotalSpots(totalSpots);
             parking.setHourlyRate(hourlyRate);
+            parking.setMapLink(mapLink);
 
             parkingService.updateParking(parking);
             model.addAttribute("message", "Parking updated successfully");

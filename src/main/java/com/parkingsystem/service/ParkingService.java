@@ -56,7 +56,7 @@ public class ParkingService {
 
     // Create new parking location
     @Transactional
-    public Parking createParking(String location, int totalSpots, BigDecimal hourlyRate) {
+    public Parking createParking(String location, int totalSpots, BigDecimal hourlyRate, String mapLink) {
         if (location == null || location.trim().isEmpty()) {
             throw new RuntimeException("Location name is required");
         }
@@ -70,6 +70,7 @@ public class ParkingService {
         }
 
         Parking parking = new Parking(location, totalSpots, hourlyRate);
+        parking.setMapLink(mapLink); // Set the map link
         return parkingRepository.save(parking);
     }
 

@@ -9,17 +9,17 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
-import java.math.BigDecimal;
 import java.util.List;
+
 @SpringBootApplication
-@EnableScheduling  // Don't forget this annotation to enable scheduled tasks
+@EnableScheduling  // Keep this annotation to enable scheduled tasks
 public class ParkingSystemApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(ParkingSystemApplication.class, args);
     }
 
-    // Inject services through method parameters to avoid circular dependencies
+    // Create admin users and fix any inconsistent data
     @Bean
     public CommandLineRunner loadData(UserService userService, ParkingService parkingService) {
         return args -> {
@@ -40,33 +40,7 @@ public class ParkingSystemApplication {
                 e.printStackTrace(); // Print stack trace for more detailed debugging
             }
 
-            // Create some sample parking lots if database is empty
-            try {
-                if (parkingService.getAllParkings().isEmpty()) {
-                    Parking downtown = parkingService.createParking("Downtown Parking", 50, new BigDecimal("5.00"));
-                    Parking airport = parkingService.createParking("Airport Parking", 100, new BigDecimal("10.00"));
-                    Parking mall = parkingService.createParking("Shopping Mall Parking", 200, new BigDecimal("3.50"));
-
-                    System.out.println("Sample parking locations created");
-
-                    // Create attendant users for each parking
-                    userService.createUser("attendant1", "pass123", "ATTENDANT");
-                    userService.assignAttendantToParking(2L, downtown.getId());
-
-                    userService.createUser("attendant2", "pass123", "ATTENDANT");
-                    userService.assignAttendantToParking(3L, airport.getId());
-
-                    userService.createUser("attendant3", "pass123", "ATTENDANT");
-                    userService.assignAttendantToParking(4L, mall.getId());
-
-                    System.out.println("Sample attendants created and assigned");
-                }
-            } catch (Exception e) {
-                System.err.println("Error creating sample data: " + e.getMessage());
-                e.printStackTrace(); // Print stack trace for more detailed debugging
-            }
-
-            // Fix any inconsistent parking data
+            // Fix any inconsistent parking data - KEEPING this important validation
             try {
                 List<Parking> allParkings = parkingService.getAllParkings();
                 for (Parking parking : allParkings) {

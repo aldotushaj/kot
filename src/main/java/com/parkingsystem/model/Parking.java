@@ -13,6 +13,7 @@ public class Parking {
     private int totalSpots;
     private int availableSpots;
     private BigDecimal hourlyRate;
+    private String mapLink;
 
     // Constructors
     public Parking() {}
@@ -63,5 +64,13 @@ public class Parking {
 
     public void setHourlyRate(BigDecimal hourlyRate) {
         this.hourlyRate = hourlyRate;
+    }
+
+    public String getMapLink() {
+        return mapLink;
+    }
+
+    public void setMapLink(String mapLink) {
+        this.mapLink = mapLink;
     }
 }

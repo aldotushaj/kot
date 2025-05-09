@@ -24,6 +24,7 @@
                     <th>Total Spots</th>
                     <th>Available Spots</th>
                     <th>Hourly Rate</th>
+                    <th>Map Link</th>
                     <th>Actions</th>
                 </tr>
                 </thead>
@@ -35,6 +36,13 @@
                     <td th:text="${parking.availableSpots}">20</td>
                     <td>$<span th:text="${parking.hourlyRate}">5.00</span></td>
                     <td>
+                        <a th:if="${parking.mapLink != null and !parking.mapLink.isEmpty()}"
+                           th:href="${parking.mapLink}" target="_blank">
+                            <i class="bi bi-map"></i> View Map
+                        </a>
+                        <span th:unless="${parking.mapLink != null and !parking.mapLink.isEmpty()}">-</span>
+                    </td>
+                    <td>
                         <div class="d-flex">
                             <a th:href="@{/admin/parking/{id}/edit(id=${parking.id})}" class="btn btn-sm btn-warning me-2">Edit</a>
                             <form th:action="@{/admin/parking/{id}/delete(id=${parking.id})}" method="post">
@@ -44,7 +52,7 @@
                     </td>
                 </tr>
                 <tr th:if="${parkings.isEmpty()}">
-                    <td colspan="6" class="text-center">No parking locations found</td>
+                    <td colspan="7" class="text-center">No parking locations found</td>
                 </tr>
                 </tbody>
             </table>

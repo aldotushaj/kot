@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{layout/main :: head}"></head>
@@ -16,6 +15,13 @@
                             <strong>Available Spots:</strong> <span th:text="${parking.availableSpots}">10</span> / <span th:text="${parking.totalSpots}">50</span><br/>
                             <strong>Rate:</strong> $<span th:text="${parking.hourlyRate}">5.00</span> per hour
                         </p>
+
+                        <!-- Show map link if available -->
+                        <div th:if="${parking.mapLink != null and !parking.mapLink.isEmpty()}" class="mb-3">
+                            <a th:href="${parking.mapLink}" target="_blank" class="btn btn-outline-primary">
+                                <i class="bi bi-map"></i> View on Google Maps
+                            </a>
+                        </div>
 
                         <a th:href="@{/parking/{id}/reserve(id=${parking.id})}" class="btn btn-success">Reserve a Spot</a>
                     </div>
