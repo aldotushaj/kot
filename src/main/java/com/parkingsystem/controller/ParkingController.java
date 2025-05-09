@@ -54,6 +54,7 @@ public class ParkingController {
     }
 
     // Show reservation form - requires authentication
+
     @GetMapping("/{id}/reserve")
     public String showReservationForm(@PathVariable Long id, Model model) {
         // Log the request to help with debugging
@@ -71,10 +72,12 @@ public class ParkingController {
             parkingService.getParkingById(id).ifPresent(parking -> {
                 model.addAttribute("parking", parking);
 
-                // Add default times - current time + 1 hour for end time
+                // Add default times - current time for start time, +1 hour for end time
                 LocalDateTime now = LocalDateTime.now();
-                // Round to next hour
-                LocalDateTime startTime = now.withMinute(0).withSecond(0).withNano(0).plusHours(1);
+                // Round to nearest 5 minutes
+                int minute = now.getMinute();
+                minute= minute + 5;
+                LocalDateTime startTime = now.withMinute(minute).withSecond(0).withNano(0);
                 LocalDateTime endTime = startTime.plusHours(1);
 
                 model.addAttribute("startTime", startTime);
@@ -90,6 +93,7 @@ public class ParkingController {
     }
 
     // Create reservation - requires authentication
+
     @PostMapping("/{id}/reserve")
     public String createReservation(
             @PathVariable Long id,
@@ -116,7 +120,7 @@ public class ParkingController {
         // Check if start time is in the past
         LocalDateTime now = LocalDateTime.now();
         if (startTime.isBefore(now)) {
-            String errorMessage = "You selected a time that has already passed. Please choose a future time.";
+            String errorMessage = "Start time cannot be in the past. Please choose a current or future time.";
 
             // Only set the error attribute once
             model.addAttribute("reservationError", errorMessage);
@@ -126,6 +130,21 @@ public class ParkingController {
                 model.addAttribute("parking", parking);
                 model.addAttribute("licensePlate", licensePlate);
                 // Keep the original times selected by the user
+                model.addAttribute("startTime", startTime);
+                model.addAttribute("endTime", endTime);
+            });
+
+            return "user/reservation-form";
+        }
+
+        // Check if end time is before or equal to start time
+        if (endTime.isBefore(startTime) || endTime.isEqual(startTime)) {
+            String errorMessage = "End time must be after start time.";
+            model.addAttribute("reservationError", errorMessage);
+
+            parkingService.getParkingById(id).ifPresent(parking -> {
+                model.addAttribute("parking", parking);
+                model.addAttribute("licensePlate", licensePlate);
                 model.addAttribute("startTime", startTime);
                 model.addAttribute("endTime", endTime);
             });
