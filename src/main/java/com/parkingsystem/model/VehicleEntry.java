@@ -17,6 +17,10 @@ public class VehicleEntry {
     @ManyToOne
     private Parking parking;
 
+    // This field is transient - not stored in the database
+    @Transient
+    private Long checkoutReservationId;
+
     // Constructors
     public VehicleEntry() {}
 
@@ -74,5 +78,14 @@ public class VehicleEntry {
 
     public void setParking(Parking parking) {
         this.parking = parking;
+    }
+
+    // Getter and setter for the transient field
+    public Long getCheckoutReservationId() {
+        return checkoutReservationId;
+    }
+
+    public void setCheckoutReservationId(Long checkoutReservationId) {
+        this.checkoutReservationId = checkoutReservationId;
     }
 }

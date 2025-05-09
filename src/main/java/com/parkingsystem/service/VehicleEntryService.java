@@ -1,8 +1,10 @@
 package com.parkingsystem.service;
 
 import com.parkingsystem.model.Parking;
+import com.parkingsystem.model.Reservation;
 import com.parkingsystem.model.VehicleEntry;
 import com.parkingsystem.repository.ParkingRepository;
+import com.parkingsystem.repository.ReservationRepository;
 import com.parkingsystem.repository.VehicleEntryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -10,6 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -21,12 +25,15 @@ public class VehicleEntryService {
 
     private final VehicleEntryRepository vehicleEntryRepository;
     private final ParkingRepository parkingRepository;
+    private final ReservationRepository reservationRepository;
 
     @Autowired
     public VehicleEntryService(VehicleEntryRepository vehicleEntryRepository,
-                               ParkingRepository parkingRepository) {
+                               ParkingRepository parkingRepository,
+                               ReservationRepository reservationRepository) {
         this.vehicleEntryRepository = vehicleEntryRepository;
         this.parkingRepository = parkingRepository;
+        this.reservationRepository = reservationRepository;
     }
 
     // Register vehicle entry
@@ -78,8 +85,48 @@ public class VehicleEntryService {
             throw new RuntimeException("Vehicle already checked out");
         }
 
-        // Update timeOut
-        entry.setTimeOut(LocalDateTime.now());
+        // Update timeOut to current time
+        LocalDateTime exitTime = LocalDateTime.now();
+        entry.setTimeOut(exitTime);
+
+        // For walk-in vehicles (not reserved from app), we need to create a reservation record
+        // to keep track of it in the history
+        Reservation createdReservation = null;
+        if (!entry.isReservedFromApp()) {
+            // Create a reservation record for this walk-in entry
+            try {
+                LocalDateTime entryTime = entry.getTimeIn();
+                String licensePlate = entry.getLicensePlate();
+                Parking parking = entry.getParking();
+
+                // Calculate price based on hourly rate and duration
+                long minutes = Duration.between(entryTime, exitTime).toMinutes();
+                long hours = minutes / 60;
+                if (minutes % 60 > 0) {
+                    hours++; // Round up to the next hour
+                }
+                hours = Math.max(1, hours); // Minimum 1 hour
+                BigDecimal price = parking.getHourlyRate().multiply(BigDecimal.valueOf(hours));
+
+                // Create a reservation record for tracking history
+                Reservation reservation = new Reservation();
+                reservation.setLicensePlate(licensePlate);
+                reservation.setStartTime(entryTime);
+                reservation.setEndTime(exitTime);
+                reservation.setCalculatedPrice(price);
+                reservation.setPaid(true); // Assuming walk-in vehicles pay at exit
+                reservation.setReservedFromApp(false);
+                reservation.setParking(parking);
+                reservation.setUsername("walk-in"); // Special username for walk-ins
+                reservation.setProcessedExpiration(true); // Already processed
+
+                createdReservation = reservationRepository.save(reservation);
+                logger.info("Created reservation record for walk-in vehicle: {}", licensePlate);
+            } catch (Exception e) {
+                logger.error("Failed to create reservation record for walk-in vehicle: {}", e.getMessage());
+                // Don't throw exception here to avoid preventing checkout
+            }
+        }
 
         // Update available spots with validation
         Parking parking = entry.getParking();
@@ -92,7 +139,15 @@ public class VehicleEntryService {
             // Don't update spots if it would exceed total
         }
 
-        return vehicleEntryRepository.save(entry);
+        // Save the updated entry
+        VehicleEntry savedEntry = vehicleEntryRepository.save(entry);
+
+        // Set the reservation ID for the controller to use
+        if (createdReservation != null) {
+            savedEntry.setCheckoutReservationId(createdReservation.getId());
+        }
+
+        return savedEntry;
     }
 
     // Get all active entries for a parking location

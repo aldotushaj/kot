@@ -1,0 +1,100 @@
+<!-- src/main/resources/templates/attendant/receipt.html -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/main :: head}"></head>
+<body>
+<div th:replace="~{layout/main :: body(content=~{::content})}">
+  <div th:fragment="content">
+    <div class="container my-4">
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <h2 class="mb-0">Parking Receipt</h2>
+        </div>
+        <div class="card-body">
+          <div class="row mb-4">
+            <div class="col-sm-6">
+              <h5 class="mb-3">Parking Location:</h5>
+              <p class="mb-1" th:text="${reservation.parking.location}">Downtown Parking</p>
+              <p class="mb-1" th:if="${reservation.parking.mapLink}">
+                <a th:href="${reservation.parking.mapLink}" target="_blank">
+                  <i class="bi bi-map"></i> View on Map
+                </a>
+              </p>
+            </div>
+            <div class="col-sm-6 text-sm-end">
+              <h5 class="mb-3">Receipt Details:</h5>
+              <p class="mb-1">Receipt #: <span th:text="${reservation.id}">12345</span></p>
+              <p class="mb-1">Date: <span th:text="${#temporals.format(reservation.endTime, 'dd-MM-yyyy')}">01-01-2025</span></p>
+              <p class="mb-1">Time: <span th:text="${#temporals.format(reservation.endTime, 'HH:mm:ss')}">12:34:56</span></p>
+            </div>
+          </div>
+
+          <div class="row mb-4">
+            <div class="col-12">
+              <h5 class="mb-3">Vehicle Information:</h5>
+              <p class="mb-1"><strong>License Plate:</strong> <span th:text="${reservation.licensePlate}">ABC123</span></p>
+            </div>
+          </div>
+
+          <div class="row mb-4">
+            <div class="col-12">
+              <h5 class="mb-3">Parking Details:</h5>
+              <div class="table-responsive">
+                <table class="table table-bordered">
+                  <thead class="table-light">
+                  <tr>
+                    <th>Check-in Time</th>
+                    <th>Check-out Time</th>
+                    <th>Duration</th>
+                    <th>Rate</th>
+                    <th>Total</th>
+                  </tr>
+                  </thead>
+                  <tbody>
+                  <tr>
+                    <td th:text="${#temporals.format(reservation.startTime, 'dd-MM-yyyy HH:mm')}">01-01-2025 10:00</td>
+                    <td th:text="${#temporals.format(reservation.endTime, 'dd-MM-yyyy HH:mm')}">01-01-2025 12:00</td>
+                    <td>
+                      <span th:text="${durationHours}">2</span> hr
+                      <span th:if="${durationMinutes > 0}" th:text="${durationMinutes}">30</span>
+                      <span th:if="${durationMinutes > 0}"> min</span>
+                    </td>
+                    <td>$<span th:text="${reservation.parking.hourlyRate}">5.00</span>/hr</td>
+                    <td>$<span th:text="${reservation.calculatedPrice}">10.00</span></td>
+                  </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-12">
+              <div class="alert alert-success">
+                <strong>Payment Status:</strong> Paid
+              </div>
+            </div>
+          </div>
+
+          <div class="row mt-4">
+            <div class="col-12 text-center">
+              <p class="mb-0">Thank you for using our parking services!</p>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <div class="d-flex justify-content-between">
+            <button class="btn btn-primary" onclick="window.print()">
+              <i class="bi bi-printer"></i> Print Receipt
+            </button>
+            <a th:href="@{/attendant/dashboard/{id}(id=${reservation.parking.id})}" class="btn btn-secondary">
+              Back to Dashboard
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

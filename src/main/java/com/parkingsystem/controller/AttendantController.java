@@ -15,6 +15,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Comparator;
@@ -65,9 +66,27 @@ public class AttendantController {
             // Get today's reservations
             LocalDateTime startOfDay = LocalDateTime.now().with(LocalTime.MIN);
             LocalDateTime endOfDay = LocalDateTime.now().with(LocalTime.MAX);
+            LocalDateTime currentTime = LocalDateTime.now();
 
             List<Reservation> todaysReservations = reservationService.getReservationsByParkingAndTimeRange(
                     parkingId, startOfDay, endOfDay);
+
+            // Sort reservations with complex logic:
+            // 1. Active/upcoming reservations first (end time > current time or null end time)
+            // 2. Completed reservations after (end time <= current time)
+            // 3. Within each group, sort by start time (newest first)
+            todaysReservations.sort((r1, r2) -> {
+                boolean r1Active = r1.getEndTime() == null || r1.getEndTime().isAfter(currentTime);
+                boolean r2Active = r2.getEndTime() == null || r2.getEndTime().isAfter(currentTime);
+
+                // If one is active and the other is not, the active one comes first
+                if (r1Active && !r2Active) return -1;
+                if (!r1Active && r2Active) return 1;
+
+                // If both are in the same category (both active or both completed),
+                // sort by start time (newest first)
+                return r2.getStartTime().compareTo(r1.getStartTime());
+            });
 
             model.addAttribute("parking", parking);
             model.addAttribute("activeEntries", activeEntries);
@@ -85,15 +104,31 @@ public class AttendantController {
             // Get all reservations for this parking
             List<Reservation> allReservations = reservationService.getReservationsByParking(parkingId);
 
-            // Filter to exclude today's reservations
+            // Current date for filtering
             LocalDateTime startOfDay = LocalDateTime.now().with(LocalTime.MIN);
-            List<Reservation> pastReservations = allReservations.stream()
+
+            // Filter and separate the reservations into two categories:
+            // 1. App reservations - reservedFromApp is true
+            // 2. Walk-in reservations - reservedFromApp is false
+
+            // Filter app reservations (past only)
+            List<Reservation> appReservations = allReservations.stream()
+                    .filter(r -> r.isReservedFromApp()) // App reservations
                     .filter(r -> r.getEndTime() != null)
                     .filter(r -> r.getEndTime().isBefore(startOfDay))
                     .sorted((r1, r2) -> r2.getEndTime().compareTo(r1.getEndTime())) // Compare in reverse order
                     .collect(Collectors.toList());
+
+            // Filter walk-in reservations (all past, including TODAY's completed walk-ins)
+            List<Reservation> walkInReservations = allReservations.stream()
+                    .filter(r -> !r.isReservedFromApp()) // Walk-in reservations
+                    .filter(r -> r.getEndTime() != null) // Only completed ones
+                    .sorted((r1, r2) -> r2.getEndTime().compareTo(r1.getEndTime())) // Compare in reverse order
+                    .collect(Collectors.toList());
+
             model.addAttribute("parking", parking);
-            model.addAttribute("pastReservations", pastReservations);
+            model.addAttribute("appReservations", appReservations);
+            model.addAttribute("walkInReservations", walkInReservations);
         });
 
         return "attendant/reservation-history";
@@ -127,6 +162,13 @@ public class AttendantController {
             VehicleEntry entry = vehicleEntryService.registerExit(entryId);
             model.addAttribute("entry", entry);
             model.addAttribute("message", "Vehicle checked out successfully");
+
+            // If this was a walk-in vehicle (not from app) and we have created a reservation record
+            if (!entry.isReservedFromApp() && entry.getCheckoutReservationId() != null) {
+                // Redirect to receipt page with the reservation ID
+                return "redirect:/attendant/receipt/" + entry.getCheckoutReservationId();
+            }
+
             return "redirect:/attendant/dashboard/" + entry.getParking().getId();
         } catch (RuntimeException e) {
             model.addAttribute("error", e.getMessage());
@@ -141,7 +183,36 @@ public class AttendantController {
             }
         }
     }
+    @GetMapping("/receipt/{reservationId}")
+    public String showReceipt(
+            @PathVariable Long reservationId,
+            Model model) {
 
+        try {
+            Optional<Reservation> reservationOpt = reservationService.getReservationById(reservationId);
+
+            if (reservationOpt.isPresent()) {
+                Reservation reservation = reservationOpt.get();
+                model.addAttribute("reservation", reservation);
+
+                // Calculate the duration in hours and minutes
+                long minutes = Duration.between(reservation.getStartTime(), reservation.getEndTime()).toMinutes();
+                long hours = minutes / 60;
+                long remainingMinutes = minutes % 60;
+
+                model.addAttribute("durationHours", hours);
+                model.addAttribute("durationMinutes", remainingMinutes);
+
+                return "attendant/receipt";
+            } else {
+                model.addAttribute("error", "Receipt not found");
+                return "redirect:/attendant";
+            }
+        } catch (Exception e) {
+            model.addAttribute("error", e.getMessage());
+            return "redirect:/attendant";
+        }
+    }
     // Search for reservations by license plate
     @GetMapping("/{parkingId}/search")
     public String searchReservations(

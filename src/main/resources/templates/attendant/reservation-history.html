@@ -12,40 +12,88 @@
       <a th:href="@{/attendant/history/{id}(id=${parking.id})}" class="btn btn-secondary active">Reservation History</a>
     </div>
 
-    <!-- Past Reservations -->
-    <h3>Past Reservations</h3>
-    <div class="table-responsive">
-      <table class="table table-striped">
-        <thead>
-        <tr>
-          <th>License Plate</th>
-          <th>Start Time</th>
-          <th>End Time</th>
-          <th>Price</th>
-          <th>Paid</th>
-          <th>Reserved From App</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr th:each="reservation : ${pastReservations}">
-          <td th:text="${reservation.licensePlate}">ABC-123</td>
-          <td th:text="${#temporals.format(reservation.startTime, 'yyyy-MM-dd HH:mm')}">2025-01-01 10:00</td>
-          <td th:text="${#temporals.format(reservation.endTime, 'yyyy-MM-dd HH:mm')}">2025-01-01 12:00</td>
-          <td>$<span th:text="${reservation.calculatedPrice}">10.00</span></td>
-          <td>
-            <span th:if="${reservation.paid}" class="badge bg-success">Paid</span>
-            <span th:unless="${reservation.paid}" class="badge bg-warning">Unpaid</span>
-          </td>
-          <td>
-            <span th:if="${reservation.reservedFromApp}" class="badge bg-info">Yes</span>
-            <span th:unless="${reservation.reservedFromApp}" class="badge bg-secondary">No</span>
-          </td>
-        </tr>
-        <tr th:if="${pastReservations.isEmpty()}">
-          <td colspan="6" class="text-center">No past reservations found</td>
-        </tr>
-        </tbody>
-      </table>
+    <!-- App Reservations Section -->
+    <div class="card mb-4">
+      <div class="card-header bg-info text-white">
+        <h5>App Reservations</h5>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-striped">
+            <thead>
+            <tr>
+              <th>License Plate</th>
+              <th>Start Time</th>
+              <th>End Time</th>
+              <th>Price</th>
+              <th>Paid</th>
+              <th>User</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="reservation : ${appReservations}">
+              <td th:text="${reservation.licensePlate}">ABC-123</td>
+              <td th:text="${#temporals.format(reservation.startTime, 'yyyy-MM-dd HH:mm')}">2025-01-01 10:00</td>
+              <td th:text="${#temporals.format(reservation.endTime, 'yyyy-MM-dd HH:mm')}">2025-01-01 12:00</td>
+              <td>$<span th:text="${reservation.calculatedPrice}">10.00</span></td>
+              <td>
+                <span th:if="${reservation.paid}" class="badge bg-success">Paid</span>
+                <span th:unless="${reservation.paid}" class="badge bg-warning">Unpaid</span>
+              </td>
+              <td th:text="${reservation.username}">user123</td>
+            </tr>
+            <tr th:if="${appReservations.isEmpty()}">
+              <td colspan="6" class="text-center">No app reservations found</td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Walk-in Vehicles Section -->
+    <div class="card mb-4">
+      <div class="card-header bg-secondary text-white">
+        <h5>Walk-in Vehicles</h5>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-striped">
+            <thead>
+            <tr>
+              <th>License Plate</th>
+              <th>Check-in Time</th>
+              <th>Check-out Time</th>
+              <th>Duration</th>
+              <th>Price</th>
+              <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="reservation : ${walkInReservations}">
+              <td th:text="${reservation.licensePlate}">ABC-123</td>
+              <td th:text="${#temporals.format(reservation.startTime, 'yyyy-MM-dd HH:mm')}">2025-01-01 10:00</td>
+              <td th:text="${#temporals.format(reservation.endTime, 'yyyy-MM-dd HH:mm')}">2025-01-01 12:00</td>
+              <td>
+                <span th:with="duration=${T(java.time.Duration).between(reservation.startTime, reservation.endTime)}">
+                  <span th:text="${duration.toHours()}">2</span>h
+                  <span th:text="${duration.toMinutesPart()}">30</span>m
+                </span>
+              </td>
+              <td>$<span th:text="${reservation.calculatedPrice}">10.00</span></td>
+              <td>
+                <a th:href="@{/attendant/receipt/{id}(id=${reservation.id})}" class="btn btn-sm btn-primary">
+                  <i class="bi bi-receipt"></i> Receipt
+                </a>
+              </td>
+            </tr>
+            <tr th:if="${walkInReservations.isEmpty()}">
+              <td colspan="6" class="text-center">No walk-in vehicles found</td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 </div>
